@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import './migrate.js'
 
 const fastify = Fastify({ logger: true })
 
