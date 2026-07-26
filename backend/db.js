@@ -6,6 +6,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const dbPath = path.join(__dirname, 'data', 'monthly.sqlite')
 
 const db = new Database(dbPath)
+db.pragma('foreign_keys = ON')
 db.pragma('journal_mode = WAL')
 
 export default db
+
+
