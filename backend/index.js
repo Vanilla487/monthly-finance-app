@@ -23,10 +23,29 @@ const start = async () => {
 
 start()
 
-import { createRule, findMatchingRule } from './rules.js'
+import { createTransaction, getTransactionsByStatement } from './transactions.js'
+import { getAllStatements } from './statements.js'
 import { getAllCategories } from './categories.js'
 
+const [statement] = getAllStatements()
 const [groceries] = getAllCategories()
-createRule({ substring: 'REWE', displayName: 'Rewe', categoryId: groceries.id })
-console.log(findMatchingRule('REWE SAGT DANKE 4829 KARTENZAHLG'))
-console.log(findMatchingRule('SPOTIFY'))
+
+createTransaction({
+  statementId: statement.id,
+  date: '2026-06-01',
+  rawDescription: 'REWE SAGT DANKE 4829',
+  displayName: 'Rewe',
+  amount: 38.12,
+  categoryId: groceries.id
+})
+
+createTransaction({
+  statementId: statement.id,
+  date: '2026-06-03',
+  rawDescription: 'UNKNOWN MERCHANT XYZ',
+  displayName: 'Unknown Merchant Xyz',
+  amount: 12.4
+  // no categoryId — stays uncategorized
+})
+
+console.log(getTransactionsByStatement(statement.id))
