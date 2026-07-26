@@ -23,6 +23,10 @@ const start = async () => {
 
 start()
 
-
+import { createRule, findMatchingRule } from './rules.js'
 import { getAllCategories } from './categories.js'
-console.log(getAllCategories())
+
+const [groceries] = getAllCategories()
+createRule({ substring: 'REWE', displayName: 'Rewe', categoryId: groceries.id })
+console.log(findMatchingRule('REWE SAGT DANKE 4829 KARTENZAHLG'))
+console.log(findMatchingRule('SPOTIFY'))
