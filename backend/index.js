@@ -22,3 +22,7 @@ const start = async () => {
 }
 
 start()
+import { createAccount, getAllAccounts } from './accounts.js'
+
+createAccount({ bankType: 'n26', customName: 'N26 (Personal)' })
+console.log(getAllAccounts())
