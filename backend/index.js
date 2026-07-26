@@ -24,11 +24,5 @@ const start = async () => {
 start()
 
 
-import { createStatement, getAllStatements } from './statements.js'
-import { getAllAccounts } from './accounts.js'
-
-const [firstAccount] = getAllAccounts()
-if (firstAccount) {
-  createStatement({ accountId: firstAccount.id, month: '2026-06' })
-  console.log(getAllStatements())
-}
+import { getAllCategories } from './categories.js'
+console.log(getAllCategories())
