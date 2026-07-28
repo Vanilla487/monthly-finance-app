@@ -1,12 +1,18 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import './migrate.js'
+import statementsRoutes from './routes/statements.js'
+import rulesRoutes from './routes/rules.js'
 
 const fastify = Fastify({ logger: true })
 
 await fastify.register(cors, {
   origin: 'http://localhost:5173'
 })
+
+
+await fastify.register(statementsRoutes)
+await fastify.register(rulesRoutes)
 
 fastify.get('/api/health', async (request, reply) => {
   return { status: 'bombaclaaaart' }
