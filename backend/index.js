@@ -3,6 +3,8 @@ import cors from '@fastify/cors'
 import './migrate.js'
 import statementsRoutes from './routes/statements.js'
 import rulesRoutes from './routes/rules.js'
+import categoriesRoutes from './routes/categories.js'
+import accountsRoutes from './routes/accounts.js'
 
 const fastify = Fastify({ logger: true })
 
@@ -13,6 +15,8 @@ await fastify.register(cors, {
 
 await fastify.register(statementsRoutes)
 await fastify.register(rulesRoutes)
+await fastify.register(categoriesRoutes)
+await fastify.register(accountsRoutes)
 
 fastify.get('/api/health', async (request, reply) => {
   return { status: 'bombaclaaaart' }

@@ -13,14 +13,50 @@ export function getStatementById(id) {
 }
 
 export function getAllStatements() {
-  return db
+  const statements = db
     .prepare(
-      `SELECT statements.*, accounts.bank_type, accounts.custom_name
+      `SELECT
+         statements.*,
+         accounts.bank_type,
+         accounts.custom_name,
+         COALESCE(SUM(transactions.amount), 0) AS total
        FROM statements
        JOIN accounts ON accounts.id = statements.account_id
+       LEFT JOIN transactions ON transactions.statement_id = statements.id
+       GROUP BY statements.id
        ORDER BY statements.month DESC`
     )
     .all()
+
+  const breakdownRows = db
+    .prepare(
+      `SELECT
+         transactions.statement_id,
+         categories.name AS category_name,
+         categories.color AS category_color,
+         SUM(transactions.amount) AS total
+       FROM transactions
+       LEFT JOIN categories ON categories.id = transactions.category_id
+       GROUP BY transactions.statement_id, transactions.category_id`
+    )
+    .all()
+
+  const breakdownByStatement = {}
+  for (const row of breakdownRows) {
+    if (!breakdownByStatement[row.statement_id]) {
+      breakdownByStatement[row.statement_id] = []
+    }
+    breakdownByStatement[row.statement_id].push({
+      name: row.category_name ?? 'Uncategorized',
+      color: row.category_color ?? 'grey',
+      total: row.total
+    })
+  }
+
+  return statements.map((s) => ({
+    ...s,
+    categoryBreakdown: breakdownByStatement[s.id] ?? []
+  }))
 }
 
 export function findStatementByAccountAndMonth(accountId, month) {

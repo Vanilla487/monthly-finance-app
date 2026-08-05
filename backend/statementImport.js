@@ -1,7 +1,17 @@
 import { getAccountById } from './accounts.js'
-import { getParserForBankType } from './parsers/index.js'
+import { getParserForBankType } from './bankRegistry.js'
 import { filterToMonth } from './parsers/monthFilter.js'
 import { findMatchingRule } from './rules.js'
+
+function inferMonth(transactions) {
+  const counts = {}
+  for (const txn of transactions) {
+    const month = txn.date.slice(0, 7)
+    counts[month] = (counts[month] || 0) + 1
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+  return sorted[0]?.[0]
+}
 
 export function buildStatementPreview({ accountId, month, csvContent }) {
   const account = getAccountById(accountId)
@@ -12,9 +22,16 @@ export function buildStatementPreview({ accountId, month, csvContent }) {
   }
 
   const parse = getParserForBankType(account.bank_type)
-
   const parsed = parse(csvContent)
-  const inMonth = filterToMonth(parsed, month)
+
+  const effectiveMonth = month || inferMonth(parsed)
+  if (!effectiveMonth) {
+    const err = new Error('Could not determine a month — CSV has no transactions')
+    err.statusCode = 400
+    throw err
+  }
+
+  const inMonth = filterToMonth(parsed, effectiveMonth)
   const expensesOnly = inMonth.filter((txn) => txn.isOutflow)
 
   const transactions = expensesOnly.map((txn) => {
@@ -25,9 +42,10 @@ export function buildStatementPreview({ accountId, month, csvContent }) {
       amount: txn.amount,
       categoryId: match?.category_id ?? null,
       categoryName: match?.category_name ?? null,
+      categoryColor: match?.category_color ?? null,
       ruleId: match?.id ?? null
     }
   })
 
-  return { accountId, month, transactions }
+  return { accountId, month: effectiveMonth, transactions }
 }

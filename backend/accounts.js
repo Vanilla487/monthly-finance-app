@@ -1,5 +1,5 @@
 import db from './db.js'
-import { isValidBankType } from './bankTypes.js'
+import { isValidBankType } from './bankRegistry.js'
 
 export function createAccount({ bankType, customName }) {
   if (!isValidBankType(bankType)) {
