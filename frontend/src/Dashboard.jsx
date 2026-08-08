@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
+import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
+import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
 
+const BANK_LOGOS = { n26: n26Logo, db: dbLogo }
 const BANK_LABELS = { n26: 'N26', db: 'DB' }
 
 function formatMonthLabel(month) {
@@ -12,27 +15,33 @@ function formatTotal(total) {
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
+    useGrouping: false
   }).format(total)
 }
 
 function CategoryBars({ breakdown, total }) {
   return (
     <div className="card-bars">
-      {breakdown.map((cat) => (
-        <div className="card-bar-row" key={cat.name}>
-          <span className="card-bar-label">{cat.name}</span>
-          <div className="card-bar-track">
-            <div
-              className="card-bar-fill"
-              style={{
-                width: total > 0 ? `${(cat.total / total) * 100}%` : '0%',
-                background: `var(--cat-${cat.color})`
-              }}
-            />
+      {breakdown.map((cat) => {
+        const rawPct = total > 0 ? cat.total / total : 0
+        const width = `${Math.sqrt(rawPct) * 100}%`
+
+        return (
+          <div className="card-bar-row" key={cat.name}>
+            <span className="card-bar-label">{cat.name}</span>
+            <div className="card-bar-track">
+              <div
+                className="card-bar-fill"
+                style={{
+                  width,
+                  background: `var(--cat-${cat.color})`
+                }}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -52,15 +61,14 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
 
   return (
     <div>
-<div className="dashboard-toolbar">
-        <button className="btn-secondary" onClick={onCategoriesClick}>Categories</button>
-        <button className="btn-secondary" onClick={onAddAccountClick}>+ Add account</button>
-      </div>
-
       <div className="statement-grid">
-        <div className="statement-card upload-card" onClick={onUploadClick}>
-          <div className="card-icon">↑</div>
-          <div className="card-total">€0</div>
+        <div className="statement-card" onClick={onUploadClick}>
+          <div className='card-header'>
+            <div className="card-total"><h2>€0</h2></div>
+             <div className="card-icon">↑</div>
+          </div>
+         
+          
         </div>
 
         {loading && <p>Loading…</p>}
@@ -70,14 +78,18 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
           return (
             <div key={s.id} className="statement-card" onClick={() => onStatementClick(s.id)}>
               <div className="card-header">
-                <span>
-                  <strong>{monthName}</strong> <span className="card-year">{year}</span>
-                </span>
+                <div className="card-total"><h2>{formatTotal(s.total)}</h2></div>
+                
                 <span className={`bank-badge bank-${s.bank_type}`}>
-                  {BANK_LABELS[s.bank_type] || s.bank_type.toUpperCase()}
+  <img src={BANK_LOGOS[s.bank_type]} alt={BANK_LABELS[s.bank_type] || s.bank_type} className={`bank-logo bank-logo-${s.bank_type}`}/>
+</span>
+                
+              </div>   
+              <span>
+                  <strong className='card-month'>{monthName}</strong> <span className="card-year">{year}</span>
                 </span>
-              </div>
-              <div className="card-total">{formatTotal(s.total)}</div>
+                
+              
               <CategoryBars breakdown={s.categoryBreakdown} total={s.total} />
             </div>
           )

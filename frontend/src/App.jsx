@@ -6,6 +6,7 @@ import CategorizeReview from './CategorizeReview'
 import StatementDetail from './StatementDetail'
 import AddAccountModal from './AddAccountModal'
 import CategoriesSettings from './CategoriesSetting'
+import NavBar from './NavBar'
 
 function App() {
   const [screen, setScreen] = useState('dashboard') // 'dashboard' | 'upload' | 'review' | 'detail' | 'add-account'
@@ -30,14 +31,15 @@ function App() {
 
   return (
     <div className="app">
-      <header><h1>Monthly</h1></header>
+      <NavBar 
+          onAddAccountClick={() => setScreen('add-account')}
+          onCategoriesClick={() => setScreen('categories')}></NavBar>
+      
 
       {screen === 'dashboard' && (
 <Dashboard
           onUploadClick={() => setScreen('upload')}
           onStatementClick={handleStatementClick}
-          onAddAccountClick={() => setScreen('add-account')}
-          onCategoriesClick={() => setScreen('categories')}
         />
       )}
 

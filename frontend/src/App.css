@@ -1,13 +1,32 @@
 :root {
   --cat-red: #ef4444;
-  --cat-orange: #f97316;
-  --cat-yellow: #eab308;
-  --cat-green: #16a34a;
+  --cat-orange: #FF5200;
+  --cat-yellow: #FFBE0B;
+  --cat-green: #018E42;
   --cat-teal: #0d9488;
-  --cat-blue: #2563eb;
-  --cat-purple: #7c3aed;
-  --cat-pink: #db2777;
+  --cat-blue: #3A86FF;
+  --cat-purple: #8338EC;
+  --cat-pink: #FF006E;
   --cat-grey: #6b7280;
+
+  --bank-n26:#5EB4A2;
+  --bank-db: #495391;
+}
+
+.nav-bar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #fff;
+  height: 48px;
+  margin: 40px 0 40px 0;
+  padding: 16px 40px;
+  border-radius: 18px;
+}
+
+.nav-buttons{
+  display: flex;
+  gap: 8px;
 }
 
 .pill-group {
@@ -166,14 +185,14 @@
 
 .statement-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 342px);
   gap: 24px;
 }
 
 .statement-card {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 40px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -186,8 +205,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
+
+
 
 .card-year {
   color: #94a3b8;
@@ -197,29 +218,42 @@
 .card-total {
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 16px;
+  
+}
+
+.bank-logo {
+  height: 16px;
+  width: auto;
+  display: block;
+}
+
+.bank-logo-n26{
+  height: 14px;
 }
 
 .bank-badge {
-  font-size: 11px;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  padding: 4px 8px;
+  height: 32px;
+  width: 32px;
   border-radius: 6px;
 }
 
 .bank-n26 {
-  background: var(--cat-teal);
+  background: var(--bank-n26);
 }
 
 .bank-db {
-  background: var(--cat-purple);
+  background: var(--bank-db);
 }
 
 .card-bars {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .card-bar-row {
@@ -228,12 +262,13 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #64748b;
+  color: #8FA1B9;
+  min-height: 8px;
 }
 
 .card-bar-track {
-  height: 6px;
-  background: #f1f5f9;
+  height: 8px;
+  background: #DAE0E8;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -241,6 +276,11 @@
 .card-bar-fill {
   height: 100%;
   border-radius: 999px;
+}
+
+.card-bar-label{
+  line-height: 6px;
+
 }
 
 .upload-card {
@@ -259,7 +299,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+ 
 }
 
 
@@ -441,6 +481,7 @@
   padding: 16px;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
+  background-color: #fff;
 }
 
 .new-category-form input[type="text"] {
@@ -450,4 +491,5 @@
   font-size: 14px;
   flex: 1;
   min-width: 160px;
+  background-color: #fff;
 }
