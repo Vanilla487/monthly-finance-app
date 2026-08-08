@@ -37,7 +37,7 @@ function CategoryBars({ breakdown, total }) {
   )
 }
 
-function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick }) {
+function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCategoriesClick }) {
   const [statements, setStatements] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -52,7 +52,8 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick }) {
 
   return (
     <div>
-      <div className="dashboard-toolbar">
+<div className="dashboard-toolbar">
+        <button className="btn-secondary" onClick={onCategoriesClick}>Categories</button>
         <button className="btn-secondary" onClick={onAddAccountClick}>+ Add account</button>
       </div>
 

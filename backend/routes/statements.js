@@ -2,6 +2,7 @@ import { buildStatementPreview } from '../statementImport.js'
 import { commitStatement } from '../statementCommit.js'
 import { findStatementByAccountAndMonth, getAllStatements } from '../statements.js'
 import { buildStatementDetail } from '../statementDetail.js'
+import { deleteStatementCascade } from '../statementDelete.js'
 
 export default async function statementsRoutes(fastify) {
   fastify.post('/api/statements/preview', async (request, reply) => {
@@ -55,4 +56,19 @@ export default async function statementsRoutes(fastify) {
       return reply.code(statusCode).send({ error: err.message })
     }
   })
+
+  fastify.delete('/api/statements/:id', async (request, reply) => {
+    try {
+      deleteStatementCascade(request.params.id)
+      return reply.code(204).send()
+    } catch (err) {
+      const statusCode = err.statusCode ?? 400
+      return reply.code(statusCode).send({ error: err.message })
+    }
+  })
 }
+  
+
+
+
+  

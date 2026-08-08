@@ -5,6 +5,7 @@ import UploadModal from './UploadModal'
 import CategorizeReview from './CategorizeReview'
 import StatementDetail from './StatementDetail'
 import AddAccountModal from './AddAccountModal'
+import CategoriesSettings from './CategoriesSetting'
 
 function App() {
   const [screen, setScreen] = useState('dashboard') // 'dashboard' | 'upload' | 'review' | 'detail' | 'add-account'
@@ -32,10 +33,11 @@ function App() {
       <header><h1>Monthly</h1></header>
 
       {screen === 'dashboard' && (
-        <Dashboard
+<Dashboard
           onUploadClick={() => setScreen('upload')}
           onStatementClick={handleStatementClick}
           onAddAccountClick={() => setScreen('add-account')}
+          onCategoriesClick={() => setScreen('categories')}
         />
       )}
 
@@ -57,6 +59,10 @@ function App() {
 
       {screen === 'add-account' && (
         <AddAccountModal onCancel={handleBackToDashboard} onCreated={handleBackToDashboard} />
+      )}
+
+      {screen === 'categories' && (
+        <CategoriesSettings onBack={handleBackToDashboard} />
       )}
     </div>
   )

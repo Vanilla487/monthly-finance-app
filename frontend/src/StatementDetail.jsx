@@ -151,17 +151,121 @@ function RuleTag({ ruleId }) {
   )
 }
 
+function EditableCategoryPill({ transaction, categories, onCategoryChanged }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handlePick(categoryId) {
+    setSaving(true)
+    setError(null)
+    try {
+      const response = await fetch(`http://localhost:3000/api/transactions/${transaction.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId })
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to update category')
+      onCategoryChanged(transaction.id, data)
+      setOpen(false)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (open) {
+    return (
+      <div className="pill-edit-wrapper">
+        <div className="pill-group">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className="category-pill"
+              style={{ '--pill-color': `var(--cat-${cat.color})` }}
+              disabled={saving}
+              onClick={() => handlePick(cat.id)}
+            >
+              <span className="dot" />
+              {cat.name}
+            </button>
+          ))}
+          <button className="btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
+        </div>
+        {error && <p className="form-error">{error}</p>}
+      </div>
+    )
+  }
+
+  return (
+    <button
+      className="category-pill selected"
+      style={{ '--pill-color': `var(--cat-${transaction.categoryColor || 'grey'})` }}
+      onClick={() => setOpen(true)}
+    >
+      <span className="dot" />
+      {transaction.categoryName || 'Uncategorized'}
+    </button>
+  )
+}
+
 function StatementDetail({ statementId, onBack }) {
   const [detail, setDetail] = useState(null)
+  const [categories, setCategories] = useState([])
   const [hoveredCategoryId, setHoveredCategoryId] = useState(null)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/statements/${statementId}`)
       .then((res) => res.json())
       .then(setDetail)
+    fetch('http://localhost:3000/api/categories')
+      .then((res) => res.json())
+      .then(setCategories)
   }, [statementId])
+
+  function handleCategoryChanged(transactionId, updated) {
+    const category = categories.find((c) => c.id === updated.category_id)
+    setDetail((prev) => ({
+      ...prev,
+      transactions: prev.transactions.map((t) =>
+        t.id === transactionId
+          ? {
+              ...t,
+              categoryId: updated.category_id,
+              categoryName: category?.name ?? null,
+              categoryColor: category?.color ?? null
+            }
+          : t
+      )
+    }))
+  }
+
+  async function handleDeleteStatement() {
+    if (!window.confirm('Delete this statement and all its transactions? This cannot be undone.')) {
+      return
+    }
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const response = await fetch(`http://localhost:3000/api/statements/${statementId}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete statement')
+      }
+      onBack()
+    } catch (err) {
+      setDeleteError(err.message)
+      setDeleting(false)
+    }
+  }
 
   const weekScopedTransactions = useMemo(() => {
     if (!detail) return []
@@ -221,7 +325,13 @@ function StatementDetail({ statementId, onBack }) {
 
   return (
     <div className="statement-detail">
-      <button className="btn-secondary" onClick={onBack}>← Back</button>
+      <div className="detail-header-row">
+        <button className="btn-secondary" onClick={onBack}>← Back</button>
+        <button className="btn-danger" onClick={handleDeleteStatement} disabled={deleting}>
+          {deleting ? 'Deleting…' : 'Delete statement'}
+        </button>
+      </div>
+      {deleteError && <p className="form-error">{deleteError}</p>}
 
       <h2>{detail.statement.customName} — {detail.statement.month}</h2>
       <p className="detail-total">{formatAmount(scopedTotal)}</p>
@@ -257,13 +367,11 @@ function StatementDetail({ statementId, onBack }) {
               <RuleTag ruleId={t.ruleId} />
             </span>
             <span>{formatAmount(t.amount)}</span>
-            <span
-              className="category-pill selected"
-              style={{ '--pill-color': `var(--cat-${t.categoryColor || 'grey'})` }}
-            >
-              <span className="dot" />
-              {t.categoryName || 'Uncategorized'}
-            </span>
+            <EditableCategoryPill
+              transaction={t}
+              categories={categories}
+              onCategoryChanged={handleCategoryChanged}
+            />
           </div>
         ))}
         {visibleTransactions.length === 0 && <p>No transactions match these filters.</p>}
