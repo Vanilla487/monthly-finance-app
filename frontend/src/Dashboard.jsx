@@ -46,6 +46,22 @@ function CategoryBars({ breakdown, total }) {
   )
 }
 
+function EmptyCategoryBars() {
+  const EmptyCategoryBars = ['Groceries', 'Subscriptions', 'Savings', 'Eating Out', 'Discretionary', 'Travel']
+  return (
+    <div className="card-bars">
+      {EmptyCategoryBars.map((categoryName) => (
+            <div key={categoryName} className="card-bar-row">
+            <span className="card-bar-label">{categoryName}</span>
+            <div className="card-bar-track">
+            </div>
+          </div> 
+      ))}
+ 
+        </div>
+  )
+}
+
 function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCategoriesClick }) {
   const [statements, setStatements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -67,6 +83,10 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
             <div className="card-total"><h2>€0</h2></div>
              <div className="card-icon">↑</div>
           </div>
+           <span>
+                  <strong className='card-month'>New</strong> 
+                </span>
+          <EmptyCategoryBars></EmptyCategoryBars>
          
           
         </div>

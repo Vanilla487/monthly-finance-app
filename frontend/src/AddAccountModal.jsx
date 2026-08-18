@@ -42,9 +42,10 @@ function AddAccountModal({ onCancel, onCreated }) {
   return (
     <div className="upload-modal">
       <h2>Add an account</h2>
-
+      <div className='account-form'>
+       <div className='account-form-fields'> 
       <label htmlFor="bank-type-select">Bank</label>
-      <select
+      <select className='bank-type-select'
         id="bank-type-select"
         value={bankType}
         onChange={(e) => setBankType(e.target.value)}
@@ -63,13 +64,18 @@ function AddAccountModal({ onCancel, onCreated }) {
         placeholder="e.g. N26 (Personal)"
       />
 
+      </div>
+
       {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+
+    
 
       <div className="modal-actions">
         <button className="btn-secondary" onClick={onCancel} disabled={saving}>Cancel</button>
         <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
           {saving ? 'Saving…' : 'Create account'}
         </button>
+      </div>
       </div>
     </div>
   )

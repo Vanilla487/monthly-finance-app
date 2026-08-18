@@ -332,11 +332,12 @@ function StatementDetail({ statementId, onBack }) {
         </button>
       </div>
       {deleteError && <p className="form-error">{deleteError}</p>}
-
+      <div className='statement-detail-main'>
+      <div className='statement-title'>
       <h2>{detail.statement.customName} — {detail.statement.month}</h2>
       <p className="detail-total">{formatAmount(scopedTotal)}</p>
-
-      <WeekSelector weeks={detail.weeks} selectedWeek={selectedWeek} onSelect={setSelectedWeek} />
+      </div>
+      
 
       <div className="detail-chart-row">
         <Donut
@@ -350,13 +351,19 @@ function StatementDetail({ statementId, onBack }) {
           onHover={setHoveredCategoryId}
         />
       </div>
+      </div>
 
-      <Toolbar
+<div className='filter-wrapper'>
+  <WeekSelector weeks={detail.weeks} selectedWeek={selectedWeek} onSelect={setSelectedWeek} />
+  <Toolbar
         categoryTotals={weekScopedCategoryTotals}
         filters={filters}
         onChange={setFilters}
         onClear={() => setFilters(DEFAULT_FILTERS)}
       />
+</div>
+
+      
 
       <div className="transaction-list">
         {visibleTransactions.map((t) => (
