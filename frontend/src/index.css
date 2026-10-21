@@ -55,6 +55,13 @@
   }
 }
 
+/* Always reserve space for the vertical scrollbar, so the layout doesn't
+   shift sideways when content grows or shrinks past the window height
+   (e.g. switching between weeks on the statement view). */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
 }
