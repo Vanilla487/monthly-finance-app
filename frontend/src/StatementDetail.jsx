@@ -119,7 +119,6 @@ function DonutLegend({ categoryTotals, hoveredKey, onHover }) {
 }
 
 function CategoryBars({ categoryTotals, hoveredKey, onHover }) {
-  const max = Math.max(...categoryTotals.map((c) => c.total), 0)
   return (
     <div className="detail-bars">
       {categoryTotals.map((cat) => {
@@ -135,7 +134,7 @@ function CategoryBars({ categoryTotals, hoveredKey, onHover }) {
             <span className="detail-bar-track">
               <span
                 className="detail-bar-fill"
-                style={{ width: `${max > 0 ? (cat.total / max) * 100 : 0}%`, background: `var(--cat-${cat.color})` }}
+                style={{ width: `${Math.sqrt(cat.percentage / 100) * 100}%`, background: `var(--cat-${cat.color})` }}
               />
             </span>
             <span className="detail-bar-amount">{formatAmount(cat.total)}</span>
@@ -400,15 +399,26 @@ function StatementDetail({ statementId, onBack }) {
     }
   }
 
+  // Only weeks that contain at least one transaction get a tab.
+  const nonEmptyWeeks = useMemo(() => {
+    if (!detail) return []
+    return detail.weeks.filter((w) =>
+      detail.transactions.some((t) => t.date >= w.startDate && t.date <= w.endDate)
+    )
+  }, [detail])
+
+  // If the selected week becomes empty (e.g. its last transaction was deleted), fall back to Show All.
+  const activeWeek = nonEmptyWeeks.some((w) => w.weekNumber === selectedWeek) ? selectedWeek : null
+
   const weekScopedTransactions = useMemo(() => {
     if (!detail) return []
-    if (selectedWeek === null) return detail.transactions
+    if (activeWeek === null) return detail.transactions
 
-    const week = detail.weeks.find((w) => w.weekNumber === selectedWeek)
+    const week = detail.weeks.find((w) => w.weekNumber === activeWeek)
     if (!week) return detail.transactions
 
     return detail.transactions.filter((t) => t.date >= week.startDate && t.date <= week.endDate)
-  }, [detail, selectedWeek])
+  }, [detail, activeWeek])
 
   const scopedTotal = useMemo(
     () => weekScopedTransactions.reduce((sum, t) => sum + t.amount, 0),
@@ -484,7 +494,7 @@ function StatementDetail({ statementId, onBack }) {
       </div>
 
       <div className="list-controls">
-        <WeekTabs weeks={detail.weeks} selectedWeek={selectedWeek} onSelect={setSelectedWeek} />
+        <WeekTabs weeks={nonEmptyWeeks} selectedWeek={activeWeek} onSelect={setSelectedWeek} />
         <CategoryFilter categoryTotals={categoryTotals} value={categoryFilter} onChange={setCategoryFilter} />
       </div>
 
