@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
 import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
+import TransactionModal from './TransactionModal'
 
 const BANK_LOGOS = { n26: n26Logo, db: dbLogo }
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -332,6 +333,7 @@ function StatementDetail({ statementId, onBack }) {
   const [hoveredKey, setHoveredKey] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [openTransactionId, setOpenTransactionId] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
 
@@ -363,6 +365,14 @@ function StatementDetail({ statementId, onBack }) {
           : t
       )
     }))
+  }
+
+  function handleTransactionDeleted(transactionId) {
+    setDetail((prev) => ({
+      ...prev,
+      transactions: prev.transactions.filter((t) => t.id !== transactionId)
+    }))
+    setOpenTransactionId(null)
   }
 
   async function handleDeleteStatement() {
@@ -430,6 +440,8 @@ function StatementDetail({ statementId, onBack }) {
 
   if (!detail) return <p>Loading…</p>
 
+  const openTransaction = detail.transactions.find((t) => t.id === openTransactionId)
+
   const [year, monthNum] = detail.statement.month.split('-')
   const monthName = MONTHS[Number(monthNum) - 1]
   const bankType = detail.statement.bankType
@@ -475,10 +487,23 @@ function StatementDetail({ statementId, onBack }) {
 
       <div className="txn-list">
         {visibleTransactions.map((t) => (
-          <div className="txn-row" key={t.id}>
+          <div
+            className="txn-row"
+            key={t.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => setOpenTransactionId(t.id)}
+            onKeyDown={(e) => {
+              if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                setOpenTransactionId(t.id)
+              }
+            }}
+          >
             <span className="txn-date">{formatDay(t.date)}</span>
             <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
-            <span className="txn-meta">
+            {/* Category picker and rule tooltip have their own interactions; don't open the modal. */}
+            <span className="txn-meta" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
               <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
             </span>
@@ -487,6 +512,16 @@ function StatementDetail({ statementId, onBack }) {
         ))}
         {visibleTransactions.length === 0 && <p className="txn-empty">No transactions match these filters.</p>}
       </div>
+
+      {openTransaction && (
+        <TransactionModal
+          transaction={openTransaction}
+          rule={rulesById[openTransaction.ruleId]}
+          accountName={detail.statement.customName}
+          onClose={() => setOpenTransactionId(null)}
+          onDeleted={handleTransactionDeleted}
+        />
+      )}
     </div>
   )
 }

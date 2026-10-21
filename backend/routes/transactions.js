@@ -1,4 +1,4 @@
-import { getTransactionById, updateTransactionCategory } from '../transactions.js'
+import { getTransactionById, updateTransactionCategory, deleteTransaction } from '../transactions.js'
 
 export default async function transactionsRoutes(fastify) {
   fastify.patch('/api/transactions/:id', async (request, reply) => {
@@ -27,5 +27,15 @@ export default async function transactionsRoutes(fastify) {
       }
       return reply.code(400).send({ error: err.message })
     }
+  })
+
+  // Removes a single transaction. Rules and the parent statement are untouched;
+  // statement totals are computed from transactions, so they update automatically.
+  fastify.delete('/api/transactions/:id', async (request, reply) => {
+    const { id } = request.params
+    if (!deleteTransaction(id)) {
+      return reply.code(404).send({ error: `No transaction found with id: ${id}` })
+    }
+    return reply.code(204).send()
   })
 }

@@ -53,3 +53,8 @@ export function updateTransactionCategory(id, categoryId) {
 export function deleteTransactionsByStatement(statementId) {
   db.prepare('DELETE FROM transactions WHERE statement_id = ?').run(statementId)
 }
+
+export function deleteTransaction(id) {
+  const result = db.prepare('DELETE FROM transactions WHERE id = ?').run(id)
+  return result.changes > 0
+}

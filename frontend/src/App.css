@@ -1033,3 +1033,137 @@
   right: 0;
   min-width: 180px;
 }
+
+/* Clickable transaction rows */
+.txn-row {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background-color 0.12s;
+}
+
+.txn-row:hover {
+  background: #f8fafc;
+}
+
+.txn-row:focus-visible {
+  outline: 2px solid #475569;
+  outline-offset: -2px;
+}
+
+.txn-meta {
+  cursor: default;
+}
+
+/* Transaction details modal */
+.modal-panel-small {
+  max-width: 440px;
+  padding: 28px;
+  border-radius: 20px;
+}
+
+.txn-modal .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.txn-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.txn-modal-header .icon-button {
+  margin: -6px -8px 0 0;
+}
+
+.txn-modal-name {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.txn-modal-date {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.txn-modal-amount {
+  margin: 20px 0 24px;
+  font-family: var(--heading);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--text-h);
+}
+
+.txn-modal-details {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  gap: 12px 16px;
+  margin: 0;
+  padding: 20px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.txn-modal-details dt {
+  color: #8fa1b9;
+}
+
+.txn-modal-details dd {
+  margin: 0;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.txn-modal-raw {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #475569 !important;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.txn-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.txn-modal-confirm-text {
+  margin-right: auto;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.btn-danger-solid {
+  background: #dc2626;
+  color: #fff;
+  border: 1px solid #dc2626;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-danger:disabled,
+.btn-danger-solid:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
