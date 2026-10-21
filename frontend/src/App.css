@@ -623,6 +623,7 @@
   display: flex;
   align-items: baseline;
   gap: 16px;
+  margin-bottom: 36px;
 }
 
 .detail-bank-badge {
@@ -645,14 +646,6 @@
 .detail-year {
   font-size: 20px;
   color: var(--muted-light);
-}
-
-.detail-total {
-  margin: 20px 0 28px;
-  font-family: var(--heading);
-  font-size: 72px;
-  line-height: 1;
-  color: var(--text-h);
 }
 
 .detail-bars {
@@ -741,13 +734,29 @@
   color: var(--text-h);
 }
 
-.donut-center-value--small {
-  font-size: 28px;
+.donut-center-hint {
+  position: absolute;
+  top: calc(50% + 28px);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.12s;
 }
 
-.donut-center-label {
-  font-size: 14px;
-  color: var(--muted);
+.donut-center-hint.visible {
+  opacity: 1;
+}
+
+.donut-center-hint .dot {
+  width: 8px;
+  height: 8px;
 }
 
 .donut-legend {

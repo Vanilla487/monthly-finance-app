@@ -79,14 +79,16 @@ function Donut({ categoryTotals, total, hoveredKey, onHover }) {
         })}
       </svg>
       <div className="donut-center">
-        {hovered ? (
-          <>
-            <span className="donut-center-label">{hovered.name}</span>
-            <span className="donut-center-value donut-center-value--small">{formatAmount(hovered.total)}</span>
-          </>
-        ) : (
-          <span className="donut-center-value">{formatWholeAmount(total)}</span>
-        )}
+        <span className="donut-center-value">{formatWholeAmount(total)}</span>
+        {/* Absolutely positioned so the total doesn't shift when this appears. */}
+        <span className={hovered ? 'donut-center-hint visible' : 'donut-center-hint'} aria-live="polite">
+          {hovered && (
+            <>
+              <span className="dot" style={{ background: `var(--cat-${hovered.color})` }} />
+              {hovered.name}
+            </>
+          )}
+        </span>
       </div>
     </div>
   )
@@ -465,7 +467,6 @@ function StatementDetail({ statementId, onBack }) {
             <h2 className="detail-month">{monthName}</h2>
             <span className="detail-year">{year}</span>
           </div>
-          <p className="detail-total">{formatWholeAmount(scopedTotal)}</p>
           <CategoryBars categoryTotals={categoryTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
           {uncategorizedCount > 0 && categoryFilter !== 'uncategorized' && (
             <button className="uncategorized-hint" onClick={() => setCategoryFilter('uncategorized')}>
