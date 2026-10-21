@@ -191,13 +191,23 @@ function CategoryFilter({ categoryTotals, value, onChange }) {
   )
 }
 
-function RuleIcon({ ruleId }) {
+function RuleIcon({ ruleId, rule }) {
   if (!ruleId) return null
   return (
-    <span className="rule-icon" title={`Categorized automatically by rule #${ruleId}`} aria-label="Matched by rule">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <span className="rule-icon" tabIndex={0} aria-label="Categorized by a rule">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
       </svg>
+      <span className="rule-tooltip" role="tooltip">
+        {rule ? (
+          <>
+            <span className="rule-tooltip-title">Categorized by rule</span>
+            Description contains <strong>“{rule.substring}”</strong>
+          </>
+        ) : (
+          <span className="rule-tooltip-title">Categorized by a rule</span>
+        )}
+      </span>
     </span>
   )
 }
@@ -318,6 +328,7 @@ function OverflowMenu({ onDelete, deleting }) {
 function StatementDetail({ statementId, onBack }) {
   const [detail, setDetail] = useState(null)
   const [categories, setCategories] = useState([])
+  const [rulesById, setRulesById] = useState({})
   const [hoveredKey, setHoveredKey] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedWeek, setSelectedWeek] = useState(null)
@@ -331,6 +342,10 @@ function StatementDetail({ statementId, onBack }) {
     fetch('http://localhost:3000/api/categories')
       .then((res) => res.json())
       .then(setCategories)
+    fetch('http://localhost:3000/api/rules')
+      .then((res) => res.json())
+      .then((rules) => setRulesById(Object.fromEntries(rules.map((r) => [r.id, r]))))
+      .catch(() => {})
   }, [statementId])
 
   function handleCategoryChanged(transactionId, updated) {
@@ -466,7 +481,7 @@ function StatementDetail({ statementId, onBack }) {
               <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
               <span className="txn-meta">
                 <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
-                <RuleIcon ruleId={t.ruleId} />
+                <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
               </span>
             </div>
             <span className="txn-amount">{formatAmount(t.amount)}</span>

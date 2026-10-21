@@ -906,9 +906,71 @@
 }
 
 .rule-icon {
+  position: relative;
   display: inline-flex;
+  padding: 3px;
+  border-radius: 4px;
   color: #94a3b8;
   cursor: help;
+  outline: none;
+}
+
+.rule-icon:hover,
+.rule-icon:focus-visible {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.rule-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 30;
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font: 400 13px/1.4 var(--sans);
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
+}
+
+.rule-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: #0f172a;
+}
+
+.rule-tooltip strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.rule-tooltip-title {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.rule-icon:hover .rule-tooltip,
+.rule-icon:focus-visible .rule-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
 }
 
 .txn-amount {
