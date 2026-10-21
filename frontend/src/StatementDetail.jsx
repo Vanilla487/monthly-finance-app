@@ -1,69 +1,139 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
+import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
 
+const BANK_LOGOS = { n26: n26Logo, db: dbLogo }
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+const euroFormat = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
+const euroWholeFormat = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+
+// "22,83 €"
 function formatAmount(amount) {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount)
+  return euroFormat.format(amount)
 }
 
-function Donut({ categoryTotals, hoveredCategoryId, onHover }) {
-  const size = 200
-  const radius = 80
-  const strokeWidth = 28
+// "2.283 €" — for the large headline numbers
+function formatWholeAmount(amount) {
+  return euroWholeFormat.format(Math.round(amount))
+}
+
+// "2026-06-01" -> "Mon 1"
+function formatDay(isoDate) {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]
+  return `${weekday} ${d}`
+}
+
+// "2026-06-01", "2026-06-07" -> "1–7 Jun"
+function formatRange(startDate, endDate) {
+  const [, m, d1] = startDate.split('-').map(Number)
+  const d2 = Number(endDate.split('-')[2])
+  const mon = MONTHS[m - 1].slice(0, 3)
+  return d1 === d2 ? `${d1} ${mon}` : `${d1}–${d2} ${mon}`
+}
+
+const keyOf = (categoryId) => categoryId ?? 'uncategorized'
+
+function Donut({ categoryTotals, total, hoveredKey, onHover }) {
+  const size = 240
+  const strokeWidth = 30
+  const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const center = size / 2
+  const hovered = categoryTotals.find((c) => keyOf(c.categoryId) === hoveredKey)
 
-  let offsetSoFar = 0
+  const offsets = categoryTotals.reduce(
+    (acc, cat) => [...acc, acc[acc.length - 1] + (cat.percentage / 100) * circumference],
+    [0]
+  )
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {categoryTotals.map((cat) => {
-        const fraction = cat.percentage / 100
-        const dash = fraction * circumference
-        const segment = (
-          <circle
-            key={cat.categoryId ?? 'uncategorized'}
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={`var(--cat-${cat.color})`}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${dash} ${circumference - dash}`}
-            strokeDashoffset={-offsetSoFar}
-            opacity={
-              hoveredCategoryId === null || hoveredCategoryId === (cat.categoryId ?? 'uncategorized')
-                ? 1
-                : 0.3
-            }
-            transform={`rotate(-90 ${center} ${center})`}
-            onMouseEnter={() => onHover(cat.categoryId ?? 'uncategorized')}
-            onMouseLeave={() => onHover(null)}
-            style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
-          />
-        )
-        offsetSoFar += dash
-        return segment
-      })}
-    </svg>
+    <div className="donut">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {categoryTotals.length === 0 && (
+          <circle cx={center} cy={center} r={radius} fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth} />
+        )}
+        {categoryTotals.map((cat, i) => {
+          const key = keyOf(cat.categoryId)
+          const dash = (cat.percentage / 100) * circumference
+          return (
+            <circle
+              key={key}
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke={`var(--cat-${cat.color})`}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${dash} ${circumference - dash}`}
+              strokeDashoffset={-offsets[i]}
+              opacity={hoveredKey === null || hoveredKey === key ? 1 : 0.25}
+              transform={`rotate(-90 ${center} ${center})`}
+              onMouseEnter={() => onHover(key)}
+              onMouseLeave={() => onHover(null)}
+            />
+          )
+        })}
+      </svg>
+      <div className="donut-center">
+        {hovered ? (
+          <>
+            <span className="donut-center-label">{hovered.name}</span>
+            <span className="donut-center-value donut-center-value--small">{formatAmount(hovered.total)}</span>
+          </>
+        ) : (
+          <span className="donut-center-value">{formatWholeAmount(total)}</span>
+        )}
+      </div>
+    </div>
   )
 }
 
-function Legend({ categoryTotals, hoveredCategoryId, onHover }) {
+function DonutLegend({ categoryTotals, hoveredKey, onHover }) {
   return (
-    <div className="legend">
+    <ul className="donut-legend">
       {categoryTotals.map((cat) => {
-        const key = cat.categoryId ?? 'uncategorized'
+        const key = keyOf(cat.categoryId)
+        return (
+          <li
+            key={key}
+            className={hoveredKey !== null && hoveredKey !== key ? 'dimmed' : ''}
+            onMouseEnter={() => onHover(key)}
+            onMouseLeave={() => onHover(null)}
+            title={cat.name}
+          >
+            <span className="dot" style={{ background: `var(--cat-${cat.color})` }} />
+            {cat.percentage.toFixed(0)}%
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function CategoryBars({ categoryTotals, hoveredKey, onHover }) {
+  const max = Math.max(...categoryTotals.map((c) => c.total), 0)
+  return (
+    <div className="detail-bars">
+      {categoryTotals.map((cat) => {
+        const key = keyOf(cat.categoryId)
         return (
           <div
             key={key}
-            className="legend-row"
+            className={hoveredKey !== null && hoveredKey !== key ? 'detail-bar-row dimmed' : 'detail-bar-row'}
             onMouseEnter={() => onHover(key)}
             onMouseLeave={() => onHover(null)}
-            style={{ opacity: hoveredCategoryId === null || hoveredCategoryId === key ? 1 : 0.4 }}
           >
-            <span className="legend-dot" style={{ background: `var(--cat-${cat.color})` }} />
-            <span className="legend-name">{cat.name}</span>
-            <span className="legend-percentage">{cat.percentage.toFixed(0)}%</span>
-            <span className="legend-total">{formatAmount(cat.total)}</span>
+            <span className="detail-bar-name">{cat.name}</span>
+            <span className="detail-bar-track">
+              <span
+                className="detail-bar-fill"
+                style={{ width: `${max > 0 ? (cat.total / max) * 100 : 0}%`, background: `var(--cat-${cat.color})` }}
+              />
+            </span>
+            <span className="detail-bar-amount">{formatAmount(cat.total)}</span>
           </div>
         )
       })}
@@ -71,97 +141,24 @@ function Legend({ categoryTotals, hoveredCategoryId, onHover }) {
   )
 }
 
-const DEFAULT_FILTERS = {
-  categoryId: 'all',
-  sortDirection: 'none',
-  minAmount: '',
-  maxAmount: ''
-}
-
-function Toolbar({ categoryTotals, filters, onChange, onClear }) {
-  const isFiltered =
-    filters.categoryId !== DEFAULT_FILTERS.categoryId ||
-    filters.sortDirection !== DEFAULT_FILTERS.sortDirection ||
-    filters.minAmount !== '' ||
-    filters.maxAmount !== ''
-
+function WeekTabs({ weeks, selectedWeek, onSelect }) {
   return (
-    <div className="toolbar">
-      <label className="toolbar-field">
-        <span className="toolbar-label">Category</span>
-        <select
-          className="toolbar-select"
-          value={filters.categoryId}
-          onChange={(e) => onChange({ ...filters, categoryId: e.target.value })}
-        >
-          <option value="all">All categories</option>
-          {categoryTotals.map((cat) => (
-            <option key={cat.categoryId ?? 'uncategorized'} value={cat.categoryId ?? 'uncategorized'}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="toolbar-field">
-        <span className="toolbar-label">Sort</span>
-        <select
-          className="toolbar-select"
-          value={filters.sortDirection}
-          onChange={(e) => onChange({ ...filters, sortDirection: e.target.value })}
-        >
-          <option value="none">Date</option>
-          <option value="desc">Amount: high to low</option>
-          <option value="asc">Amount: low to high</option>
-        </select>
-      </label>
-
-      <div className="toolbar-field">
-        <span className="toolbar-label">Amount</span>
-        <div className="amount-range">
-          <span className="amount-prefix">€</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            placeholder="Min"
-            aria-label="Minimum amount"
-            value={filters.minAmount}
-            onChange={(e) => onChange({ ...filters, minAmount: e.target.value })}
-          />
-          <span className="amount-sep">–</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            placeholder="Max"
-            aria-label="Maximum amount"
-            value={filters.maxAmount}
-            onChange={(e) => onChange({ ...filters, maxAmount: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {isFiltered && (
-        <button className="toolbar-clear" onClick={onClear}>Clear filters</button>
-      )}
-    </div>
-  )
-}
-
-function WeekSelector({ weeks, selectedWeek, onSelect }) {
-  return (
-    <div className="week-selector">
+    <div className="week-tabs" role="tablist">
       <button
-        className={selectedWeek === null ? 'week-btn selected' : 'week-btn'}
+        role="tab"
+        aria-selected={selectedWeek === null}
+        className={selectedWeek === null ? 'week-tab selected' : 'week-tab'}
         onClick={() => onSelect(null)}
       >
-        Full month
+        Show All
       </button>
       {weeks.map((w) => (
         <button
           key={w.weekNumber}
-          className={selectedWeek === w.weekNumber ? 'week-btn selected' : 'week-btn'}
+          role="tab"
+          aria-selected={selectedWeek === w.weekNumber}
+          className={selectedWeek === w.weekNumber ? 'week-tab selected' : 'week-tab'}
+          title={formatRange(w.startDate, w.endDate)}
           onClick={() => onSelect(w.weekNumber)}
         >
           Week {w.weekNumber}
@@ -171,19 +168,61 @@ function WeekSelector({ weeks, selectedWeek, onSelect }) {
   )
 }
 
-function RuleTag({ ruleId }) {
+function CategoryFilter({ categoryTotals, value, onChange }) {
+  return (
+    <div className="list-filters">
+      <select
+        className="plain-select"
+        aria-label="Filter by category"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="all">All Categories</option>
+        {categoryTotals.map((cat) => (
+          <option key={keyOf(cat.categoryId)} value={String(keyOf(cat.categoryId))}>
+            {cat.name}
+          </option>
+        ))}
+      </select>
+      {value !== 'all' && (
+        <button className="plain-button" onClick={() => onChange('all')}>Clear Filters</button>
+      )}
+    </div>
+  )
+}
+
+function RuleIcon({ ruleId }) {
   if (!ruleId) return null
   return (
-    <span className="rule-tag" title={`Matched automatically by rule #${ruleId}`}>
-      rule
+    <span className="rule-icon" title={`Categorized automatically by rule #${ruleId}`} aria-label="Matched by rule">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
     </span>
   )
 }
 
-function EditableCategoryPill({ transaction, categories, onCategoryChanged }) {
+function CategoryPicker({ transaction, categories, onCategoryChanged }) {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function close(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   async function handlePick(categoryId) {
     setSaving(true)
@@ -205,46 +244,82 @@ function EditableCategoryPill({ transaction, categories, onCategoryChanged }) {
     }
   }
 
-  if (open) {
-    return (
-      <div className="pill-edit-wrapper">
-        <div className="pill-group">
+  return (
+    <span className="category-picker" ref={ref}>
+      <button
+        className="txn-category"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        title="Change category"
+      >
+        <span className="dot" style={{ background: `var(--cat-${transaction.categoryColor || 'grey'})` }} />
+        {transaction.categoryName || 'Uncategorized'}
+      </button>
+      {open && (
+        <div className="category-menu" role="menu">
           {categories.map((cat) => (
             <button
               key={cat.id}
-              className="category-pill"
-              style={{ '--pill-color': `var(--cat-${cat.color})` }}
+              role="menuitem"
+              className={cat.id === transaction.categoryId ? 'category-menu-item current' : 'category-menu-item'}
               disabled={saving}
               onClick={() => handlePick(cat.id)}
             >
-              <span className="dot" />
+              <span className="dot" style={{ background: `var(--cat-${cat.color})` }} />
               {cat.name}
             </button>
           ))}
-          <button className="btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
+          {error && <p className="form-error">{error}</p>}
         </div>
-        {error && <p className="form-error">{error}</p>}
-      </div>
-    )
-  }
+      )}
+    </span>
+  )
+}
+
+function OverflowMenu({ onDelete, deleting }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function close(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
 
   return (
-    <button
-      className="category-pill selected"
-      style={{ '--pill-color': `var(--cat-${transaction.categoryColor || 'grey'})` }}
-      onClick={() => setOpen(true)}
-    >
-      <span className="dot" />
-      {transaction.categoryName || 'Uncategorized'}
-    </button>
+    <div className="overflow-menu" ref={ref}>
+      <button className="icon-button" aria-label="More actions" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+        </svg>
+      </button>
+      {open && (
+        <div className="category-menu overflow-menu-list" role="menu">
+          <button
+            role="menuitem"
+            className="category-menu-item danger"
+            disabled={deleting}
+            onClick={() => {
+              setOpen(false)
+              onDelete()
+            }}
+          >
+            {deleting ? 'Deleting…' : 'Delete statement'}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
 function StatementDetail({ statementId, onBack }) {
   const [detail, setDetail] = useState(null)
   const [categories, setCategories] = useState([])
-  const [hoveredCategoryId, setHoveredCategoryId] = useState(null)
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [hoveredKey, setHoveredKey] = useState(null)
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -306,111 +381,98 @@ function StatementDetail({ statementId, onBack }) {
     return detail.transactions.filter((t) => t.date >= week.startDate && t.date <= week.endDate)
   }, [detail, selectedWeek])
 
-  const weekScopedCategoryTotals = useMemo(() => {
-    const totalsByCategory = {}
+  const scopedTotal = useMemo(
+    () => weekScopedTransactions.reduce((sum, t) => sum + t.amount, 0),
+    [weekScopedTransactions]
+  )
+
+  // Per-category totals for the current week scope, largest first.
+  const categoryTotals = useMemo(() => {
+    const byCategory = {}
     for (const t of weekScopedTransactions) {
-      const key = t.categoryId ?? 'uncategorized'
-      if (!totalsByCategory[key]) {
-        totalsByCategory[key] = {
+      const key = keyOf(t.categoryId)
+      if (!byCategory[key]) {
+        byCategory[key] = {
           categoryId: t.categoryId ?? null,
           name: t.categoryName ?? 'Uncategorized',
           color: t.categoryColor ?? 'grey',
           total: 0
         }
       }
-      totalsByCategory[key].total += t.amount
+      byCategory[key].total += t.amount
     }
-    const scopedTotal = weekScopedTransactions.reduce((sum, t) => sum + t.amount, 0)
-    return Object.values(totalsByCategory).map((c) => ({
-      ...c,
-      percentage: scopedTotal > 0 ? (c.total / scopedTotal) * 100 : 0
-    }))
-  }, [weekScopedTransactions])
+    return Object.values(byCategory)
+      .map((c) => ({ ...c, percentage: scopedTotal > 0 ? (c.total / scopedTotal) * 100 : 0 }))
+      .sort((a, b) => b.total - a.total)
+  }, [weekScopedTransactions, scopedTotal])
 
   const visibleTransactions = useMemo(() => {
-    let result = [...weekScopedTransactions]
+    if (categoryFilter === 'all') return weekScopedTransactions
+    return weekScopedTransactions.filter((t) => String(keyOf(t.categoryId)) === categoryFilter)
+  }, [weekScopedTransactions, categoryFilter])
 
-    if (filters.categoryId !== 'all') {
-      result = result.filter((t) => String(t.categoryId ?? 'uncategorized') === filters.categoryId)
-    }
-    if (filters.minAmount !== '') {
-      result = result.filter((t) => t.amount >= Number(filters.minAmount))
-    }
-    if (filters.maxAmount !== '') {
-      result = result.filter((t) => t.amount <= Number(filters.maxAmount))
-    }
-    if (filters.sortDirection === 'asc') {
-      result.sort((a, b) => a.amount - b.amount)
-    } else if (filters.sortDirection === 'desc') {
-      result.sort((a, b) => b.amount - a.amount)
-    }
-
-    return result
-  }, [weekScopedTransactions, filters])
+  const uncategorizedCount = weekScopedTransactions.filter((t) => t.categoryId == null).length
 
   if (!detail) return <p>Loading…</p>
 
-  const scopedTotal = weekScopedTransactions.reduce((sum, t) => sum + t.amount, 0)
+  const [year, monthNum] = detail.statement.month.split('-')
+  const monthName = MONTHS[Number(monthNum) - 1]
+  const bankType = detail.statement.bankType
 
   return (
     <div className="statement-detail">
-      <div className="detail-header-row">
-        <button className="btn-secondary" onClick={onBack}>← Back</button>
-        <button className="btn-danger" onClick={handleDeleteStatement} disabled={deleting}>
-          {deleting ? 'Deleting…' : 'Delete statement'}
-        </button>
+      <div className="detail-topbar">
+        <button className="back-link" onClick={onBack}>&lt; back to accounts</button>
+        <OverflowMenu onDelete={handleDeleteStatement} deleting={deleting} />
       </div>
       {deleteError && <p className="form-error">{deleteError}</p>}
-      <div className='statement-detail-main'>
-      <div className='statement-title'>
-      <h2>{detail.statement.customName} — {detail.statement.month}</h2>
-      <p className="detail-total">{formatAmount(scopedTotal)}</p>
+
+      <div className="detail-summary">
+        <div className="detail-summary-left">
+          <div className="detail-heading">
+            {BANK_LOGOS[bankType] && (
+              <span className={`bank-badge detail-bank-badge bank-${bankType}`} title={detail.statement.customName}>
+                <img src={BANK_LOGOS[bankType]} alt={detail.statement.customName} className={`bank-logo bank-logo-${bankType}`} />
+              </span>
+            )}
+            <h2 className="detail-month">{monthName}</h2>
+            <span className="detail-year">{year}</span>
+          </div>
+          <p className="detail-total">{formatWholeAmount(scopedTotal)}</p>
+          <CategoryBars categoryTotals={categoryTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+          {uncategorizedCount > 0 && categoryFilter !== 'uncategorized' && (
+            <button className="uncategorized-hint" onClick={() => setCategoryFilter('uncategorized')}>
+              {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'transaction' : 'transactions'} · Review
+            </button>
+          )}
+        </div>
+
+        <div className="detail-summary-right">
+          <Donut categoryTotals={categoryTotals} total={scopedTotal} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+          <DonutLegend categoryTotals={categoryTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+        </div>
       </div>
-      
 
-      <div className="detail-chart-row">
-        <Donut
-          categoryTotals={weekScopedCategoryTotals}
-          hoveredCategoryId={hoveredCategoryId}
-          onHover={setHoveredCategoryId}
-        />
-        <Legend
-          categoryTotals={weekScopedCategoryTotals}
-          hoveredCategoryId={hoveredCategoryId}
-          onHover={setHoveredCategoryId}
-        />
-      </div>
+      <div className="list-controls">
+        <WeekTabs weeks={detail.weeks} selectedWeek={selectedWeek} onSelect={setSelectedWeek} />
+        <CategoryFilter categoryTotals={categoryTotals} value={categoryFilter} onChange={setCategoryFilter} />
       </div>
 
-<div className='filter-wrapper'>
-  <WeekSelector weeks={detail.weeks} selectedWeek={selectedWeek} onSelect={setSelectedWeek} />
-  <Toolbar
-        categoryTotals={weekScopedCategoryTotals}
-        filters={filters}
-        onChange={setFilters}
-        onClear={() => setFilters(DEFAULT_FILTERS)}
-      />
-</div>
-
-      
-
-      <div className="transaction-list">
+      <div className="txn-list">
         {visibleTransactions.map((t) => (
-          <div className="transaction-row" key={t.id}>
-            <span>{t.date}</span>
-            <span>
-              <strong>{t.displayName}</strong>
-              <RuleTag ruleId={t.ruleId} />
-            </span>
-            <span>{formatAmount(t.amount)}</span>
-            <EditableCategoryPill
-              transaction={t}
-              categories={categories}
-              onCategoryChanged={handleCategoryChanged}
-            />
+          <div className="txn-row" key={t.id}>
+            <span className="txn-date">{formatDay(t.date)}</span>
+            <div className="txn-main">
+              <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
+              <span className="txn-meta">
+                <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
+                <RuleIcon ruleId={t.ruleId} />
+              </span>
+            </div>
+            <span className="txn-amount">{formatAmount(t.amount)}</span>
           </div>
         ))}
-        {visibleTransactions.length === 0 && <p>No transactions match these filters.</p>}
+        {visibleTransactions.length === 0 && <p className="txn-empty">No transactions match these filters.</p>}
       </div>
     </div>
   )
