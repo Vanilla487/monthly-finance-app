@@ -11,6 +11,9 @@
 
   --bank-n26:#5EB4A2;
   --bank-db: #495391;
+
+  --text-primary:#000000;
+  --text-secondary:#627B9D;
 }
 
 .nav-bar{
@@ -28,6 +31,7 @@
 .nav-buttons{
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .pill-group {
@@ -566,3 +570,97 @@
   background-color: #fff;
 }
 
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal-panel {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.modal-panel-default {
+  max-width: 640px;
+}
+
+.modal-panel-large {
+  max-width: 1440px;
+}
+
+.profile-picture{
+  display: flex;
+  background-color: #0d9488;
+  border-radius: 99px;
+  height: 48px;
+  width: 48px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.rules-settings {
+  
+  margin: 0 auto;
+}
+
+.rules-settings-note {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.rule-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rule-settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.rule-settings-row.editing {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.rule-settings-row.editing input[type="text"],
+.rule-settings-row.editing select {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.rule-substring {
+  font-family: monospace;
+  font-size: 13px;
+  color: #475569;
+}
+
+.nav-bar-items {
+  font-size: 20px;
+  color: var(--text-secondary);
+  font-family: var(--Sans);
+}

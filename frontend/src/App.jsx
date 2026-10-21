@@ -6,16 +6,20 @@ import CategorizeReview from './CategorizeReview'
 import StatementDetail from './StatementDetail'
 import AddAccountModal from './AddAccountModal'
 import CategoriesSettings from './CategoriesSetting'
+import RulesSettings from './RulesSettings'
 import NavBar from './NavBar'
+import Modal from './Modal'
 
 function App() {
-  const [screen, setScreen] = useState('dashboard') // 'dashboard' | 'upload' | 'review' | 'detail' | 'add-account'
+  const [screen, setScreen] = useState('dashboard') // 'dashboard' | 'review' | 'detail'
+  const [activeModal, setActiveModal] = useState(null) // null | 'add-account' | 'categories' | 'upload'
   const [preview, setPreview] = useState(null)
   const [selectedStatementId, setSelectedStatementId] = useState(null)
 
   function handlePreviewReady(data) {
     setPreview(data)
     setScreen('review')
+    setActiveModal(null)
   }
 
   function handleBackToDashboard() {
@@ -29,22 +33,25 @@ function App() {
     setScreen('detail')
   }
 
+  function closeModal() {
+    setActiveModal(null)
+  }
+
   return (
     <div className="app">
       <NavBar 
-          onAddAccountClick={() => setScreen('add-account')}
-          onCategoriesClick={() => setScreen('categories')}></NavBar>
+          onAddAccountClick={() => setActiveModal('add-account')}
+          onCategoriesClick={() => setActiveModal('categories')}
+          onRulesClick={() => setActiveModal('rules')}>
+          
+          </NavBar>
       
 
       {screen === 'dashboard' && (
 <Dashboard
-          onUploadClick={() => setScreen('upload')}
+          onUploadClick={() => setActiveModal('upload')}
           onStatementClick={handleStatementClick}
         />
-      )}
-
-      {screen === 'upload' && (
-        <UploadModal onCancel={handleBackToDashboard} onPreviewReady={handlePreviewReady} />
       )}
 
       {screen === 'review' && preview && (
@@ -59,12 +66,28 @@ function App() {
         <StatementDetail statementId={selectedStatementId} onBack={handleBackToDashboard} />
       )}
 
-      {screen === 'add-account' && (
-        <AddAccountModal onCancel={handleBackToDashboard} onCreated={handleBackToDashboard} />
+      {activeModal === 'add-account' && (
+        <Modal onClose={closeModal}>
+          <AddAccountModal onCancel={closeModal} onCreated={closeModal} />
+        </Modal>
       )}
 
-      {screen === 'categories' && (
-        <CategoriesSettings onBack={handleBackToDashboard} />
+      {activeModal === 'categories' && (
+        <Modal onClose={closeModal}>
+          <CategoriesSettings onBack={closeModal} />
+        </Modal>
+      )}
+
+      {activeModal === 'upload' && (
+        <Modal onClose={closeModal}>
+          <UploadModal onCancel={closeModal} onPreviewReady={handlePreviewReady} />
+        </Modal>
+      )}
+
+        {activeModal === 'rules' && (
+        <Modal onClose={closeModal} size='large'>
+          <RulesSettings onBack={closeModal} />
+        </Modal>
       )}
     </div>
   )

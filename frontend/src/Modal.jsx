@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-function Modal({ onClose, children }) {
+function Modal({ onClose, children, size = 'default' }) {
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape') onClose()
@@ -15,7 +15,7 @@ function Modal({ onClose, children }) {
 
   return (
     <div className="modal-backdrop" onClick={handleBackdropClick}>
-      <div className="modal-panel" role="dialog" aria-modal="true">
+      <div className={`modal-panel modal-panel-${size}`} role="dialog" aria-modal="true">
         {children}
       </div>
     </div>
