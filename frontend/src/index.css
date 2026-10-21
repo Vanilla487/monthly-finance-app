@@ -73,6 +73,8 @@ body {
   width: 100%;
   max-width: calc(1440px + 2 * var(--page-gutter));
   padding-inline: var(--page-gutter);
+  /* Space below the last row of content, matching the 40px above the nav bar. */
+  padding-bottom: 40px;
   margin: 0 auto;
   min-height: 100svh;
   display: flex;
