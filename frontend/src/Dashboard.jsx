@@ -65,6 +65,7 @@ function EmptyCategoryBars() {
 function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCategoriesClick }) {
   const [statements, setStatements] = useState([])
   const [loading, setLoading] = useState(true)
+  const [accountFilter, setAccountFilter] = useState('all')
 
   useEffect(() => {
     fetch('http://localhost:3000/api/statements')
@@ -75,8 +76,34 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
       })
   }, [])
 
+  // Accounts that have at least one statement, in name order.
+  const accounts = Object.values(
+    Object.fromEntries(statements.map((s) => [s.account_id, { id: s.account_id, name: s.custom_name }]))
+  ).sort((a, b) => a.name.localeCompare(b.name))
+
+  const visibleStatements =
+    accountFilter === 'all' ? statements : statements.filter((s) => String(s.account_id) === accountFilter)
+
   return (
     <div>
+      {accounts.length > 1 && (
+        <div className="dashboard-filters">
+          <select
+            className="plain-select"
+            aria-label="Filter by account"
+            value={accountFilter}
+            onChange={(e) => setAccountFilter(e.target.value)}
+          >
+            <option value="all">All Accounts</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={String(a.id)}>{a.name}</option>
+            ))}
+          </select>
+          {accountFilter !== 'all' && (
+            <button className="plain-button" onClick={() => setAccountFilter('all')}>Clear Filters</button>
+          )}
+        </div>
+      )}
       <div className="statement-grid">
         <div className="statement-card" onClick={onUploadClick}>
           <div className='card-header'>
@@ -93,7 +120,7 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
 
         {loading && <p>Loading…</p>}
 
-        {statements.map((s) => {
+        {visibleStatements.map((s) => {
           const { monthName, year } = formatMonthLabel(s.month)
           return (
             <div key={s.id} className="statement-card" onClick={() => onStatementClick(s.id)}>

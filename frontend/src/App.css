@@ -1180,3 +1180,13 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* Dashboard account filter (reuses .plain-select / .plain-button) */
+.dashboard-filters {
+  --muted: #64748b;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
