@@ -839,10 +839,10 @@
 /* Transaction list */
 .txn-row {
   display: grid;
-  grid-template-columns: 96px 1fr auto;
+  grid-template-columns: 96px minmax(0, 1fr) 240px 140px;
   align-items: center;
   gap: 24px;
-  padding: 14px 8px;
+  padding: 12px 8px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -854,13 +854,6 @@
   font-size: 16px;
   color: var(--muted-light);
   font-variant-numeric: tabular-nums;
-}
-
-.txn-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
 }
 
 .txn-name {

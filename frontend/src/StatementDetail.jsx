@@ -477,13 +477,11 @@ function StatementDetail({ statementId, onBack }) {
         {visibleTransactions.map((t) => (
           <div className="txn-row" key={t.id}>
             <span className="txn-date">{formatDay(t.date)}</span>
-            <div className="txn-main">
-              <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
-              <span className="txn-meta">
-                <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
-                <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
-              </span>
-            </div>
+            <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
+            <span className="txn-meta">
+              <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
+              <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
+            </span>
             <span className="txn-amount">{formatAmount(t.amount)}</span>
           </div>
         ))}
