@@ -734,6 +734,10 @@
   color: var(--text-h);
 }
 
+.donut-center-value--category {
+  font-size: 32px;
+}
+
 .donut-center-hint {
   position: absolute;
   top: calc(50% + 28px);

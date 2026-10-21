@@ -79,7 +79,9 @@ function Donut({ categoryTotals, total, hoveredKey, onHover }) {
         })}
       </svg>
       <div className="donut-center">
-        <span className="donut-center-value">{formatWholeAmount(total)}</span>
+        <span className={hovered ? 'donut-center-value donut-center-value--category' : 'donut-center-value'}>
+          {hovered ? formatAmount(hovered.total) : formatWholeAmount(total)}
+        </span>
         {/* Absolutely positioned so the total doesn't shift when this appears. */}
         <span className={hovered ? 'donut-center-hint visible' : 'donut-center-hint'} aria-live="polite">
           {hovered && (
