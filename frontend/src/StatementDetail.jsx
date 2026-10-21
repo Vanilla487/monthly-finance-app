@@ -79,43 +79,72 @@ const DEFAULT_FILTERS = {
 }
 
 function Toolbar({ categoryTotals, filters, onChange, onClear }) {
+  const isFiltered =
+    filters.categoryId !== DEFAULT_FILTERS.categoryId ||
+    filters.sortDirection !== DEFAULT_FILTERS.sortDirection ||
+    filters.minAmount !== '' ||
+    filters.maxAmount !== ''
+
   return (
     <div className="toolbar">
-      <select
-        value={filters.categoryId}
-        onChange={(e) => onChange({ ...filters, categoryId: e.target.value })}
-      >
-        <option value="all">All categories</option>
-        {categoryTotals.map((cat) => (
-          <option key={cat.categoryId ?? 'uncategorized'} value={cat.categoryId ?? 'uncategorized'}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
+      <label className="toolbar-field">
+        <span className="toolbar-label">Category</span>
+        <select
+          className="toolbar-select"
+          value={filters.categoryId}
+          onChange={(e) => onChange({ ...filters, categoryId: e.target.value })}
+        >
+          <option value="all">All categories</option>
+          {categoryTotals.map((cat) => (
+            <option key={cat.categoryId ?? 'uncategorized'} value={cat.categoryId ?? 'uncategorized'}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <select
-        value={filters.sortDirection}
-        onChange={(e) => onChange({ ...filters, sortDirection: e.target.value })}
-      >
-        <option value="none">Sort by amount</option>
-        <option value="desc">Amount: high to low</option>
-        <option value="asc">Amount: low to high</option>
-      </select>
+      <label className="toolbar-field">
+        <span className="toolbar-label">Sort</span>
+        <select
+          className="toolbar-select"
+          value={filters.sortDirection}
+          onChange={(e) => onChange({ ...filters, sortDirection: e.target.value })}
+        >
+          <option value="none">Date</option>
+          <option value="desc">Amount: high to low</option>
+          <option value="asc">Amount: low to high</option>
+        </select>
+      </label>
 
-      <input
-        type="number"
-        placeholder="Min €"
-        value={filters.minAmount}
-        onChange={(e) => onChange({ ...filters, minAmount: e.target.value })}
-      />
-      <input
-        type="number"
-        placeholder="Max €"
-        value={filters.maxAmount}
-        onChange={(e) => onChange({ ...filters, maxAmount: e.target.value })}
-      />
+      <div className="toolbar-field">
+        <span className="toolbar-label">Amount</span>
+        <div className="amount-range">
+          <span className="amount-prefix">€</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            placeholder="Min"
+            aria-label="Minimum amount"
+            value={filters.minAmount}
+            onChange={(e) => onChange({ ...filters, minAmount: e.target.value })}
+          />
+          <span className="amount-sep">–</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            placeholder="Max"
+            aria-label="Maximum amount"
+            value={filters.maxAmount}
+            onChange={(e) => onChange({ ...filters, maxAmount: e.target.value })}
+          />
+        </div>
+      </div>
 
-      <button className="btn-secondary" onClick={onClear}>Clear filters</button>
+      {isFiltered && (
+        <button className="toolbar-clear" onClick={onClear}>Clear filters</button>
+      )}
     </div>
   )
 }

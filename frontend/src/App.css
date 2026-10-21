@@ -664,3 +664,118 @@
   color: var(--text-secondary);
   font-family: var(--Sans);
 }
+
+/* ---------- Statement filter toolbar ---------- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 24px 0 16px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.toolbar-select,
+.amount-range {
+  height: 40px;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font: 500 14px/1 var(--sans);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.toolbar-select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 180px;
+  padding: 0 36px 0 12px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.toolbar-select:hover,
+.amount-range:hover {
+  border-color: #cbd5e1;
+  background-color: #fff;
+}
+
+.toolbar-select:focus,
+.amount-range:focus-within {
+  outline: none;
+  border-color: #475569;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.15);
+}
+
+.amount-range {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+}
+
+.amount-prefix,
+.amount-sep {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.amount-range input {
+  width: 64px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.amount-range input::placeholder {
+  color: #94a3b8;
+}
+
+.amount-range input::-webkit-outer-spin-button,
+.amount-range input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.toolbar-clear {
+  margin-left: auto;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: #475569;
+  font: 500 14px var(--sans);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.toolbar-clear:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
