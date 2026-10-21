@@ -437,7 +437,7 @@ function StatementDetail({ statementId, onBack }) {
   return (
     <div className="statement-detail">
       <div className="detail-topbar">
-        <button className="back-link" onClick={onBack}>&lt; back to accounts</button>
+        <button className="back-link" onClick={onBack}>&lt; back to statements</button>
         <OverflowMenu onDelete={handleDeleteStatement} deleting={deleting} />
       </div>
       {deleteError && <p className="form-error">{deleteError}</p>}
