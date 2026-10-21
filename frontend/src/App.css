@@ -609,7 +609,7 @@
 .detail-summary {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: 64px;
   margin: 48px 0 72px;
 }
