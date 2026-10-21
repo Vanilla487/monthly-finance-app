@@ -190,8 +190,27 @@
 
 .statement-grid {
   display: grid;
-  grid-template-columns: repeat(4, 342px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
+}
+
+/* Fewer columns on smaller screens (e.g. MacBook ~1470–1512px wide) */
+@media (max-width: 1519px) {
+  .statement-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1099px) {
+  .statement-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 719px) {
+  .statement-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .statement-card {

@@ -67,8 +67,12 @@ body {
 }
 
 #root {
-  width: 1440px;
-  max-width: 100%;
+  /* Content is at most 1440px wide, with a side gutter that is always kept,
+     so the cards never touch the window edges on smaller screens. */
+  --page-gutter: 40px;
+  width: 100%;
+  max-width: calc(1440px + 2 * var(--page-gutter));
+  padding-inline: var(--page-gutter);
   margin: 0 auto;
   min-height: 100svh;
   display: flex;
@@ -135,4 +139,10 @@ code {
   color: var(--text-h);
   font-size: 24px;
   color: #404040;
+}
+
+@media (max-width: 768px) {
+  #root {
+    --page-gutter: 16px;
+  }
 }
