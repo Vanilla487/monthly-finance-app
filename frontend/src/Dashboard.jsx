@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
 import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
+import apobankLogo from './assets/apobank.svg'
 
-const BANK_LOGOS = { n26: n26Logo, db: dbLogo }
-const BANK_LABELS = { n26: 'N26', db: 'DB' }
+const BANK_LOGOS = { n26: n26Logo, db: dbLogo, apobank: apobankLogo }
+const BANK_LABELS = { n26: 'N26', db: 'DB', apobank: 'apoBank' }
 
 function formatMonthLabel(month) {
   const [year, monthNum] = month.split('-')

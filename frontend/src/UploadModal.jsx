@@ -1,5 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 
+// Bank exports are either UTF-8 or Windows-1252 (e.g. some apoBank exports).
+// file.text() always assumes UTF-8 and would mangle umlauts in the latter.
+async function readCsvText(file) {
+  const bytes = await file.arrayBuffer()
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes)
+  }
+}
+
 function UploadModal({ onCancel, onPreviewReady }) {
   const [accounts, setAccounts] = useState([])
   const [selectedAccountId, setSelectedAccountId] = useState('')
@@ -26,7 +37,7 @@ function UploadModal({ onCancel, onPreviewReady }) {
     setLoading(true)
     setError(null)
     try {
-      const csvContent = await file.text()
+      const csvContent = await readCsvText(file)
       const response = await fetch('http://localhost:3000/api/statements/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

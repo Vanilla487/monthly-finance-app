@@ -1,5 +1,6 @@
 import { parse as parseN26 } from './parsers/n26.js'
 import { parse as parseDeutscheBank } from './parsers/deutsche-bank.js'
+import { parse as parseApoBank } from './parsers/apobank.js'
 
 export const BANK_REGISTRY = {
   n26: {
@@ -11,6 +12,11 @@ export const BANK_REGISTRY = {
     label: 'Deutsche Bank',
     iconAsset: 'db',
     parserModule: parseDeutscheBank
+  },
+  apobank: {
+    label: 'apoBank',
+    iconAsset: 'apobank',
+    parserModule: parseApoBank
   }
 }
 
