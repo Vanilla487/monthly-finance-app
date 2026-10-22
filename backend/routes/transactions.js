@@ -1,17 +1,37 @@
-import { getTransactionById, updateTransactionCategory, deleteTransaction } from '../transactions.js'
+import {
+  getTransactionById,
+  updateTransactionCategory,
+  updateTransactionRefund,
+  deleteTransaction
+} from '../transactions.js'
 
 export default async function transactionsRoutes(fastify) {
   fastify.patch('/api/transactions/:id', async (request, reply) => {
     const { id } = request.params
-    const { categoryId } = request.body ?? {}
+    const { categoryId, isRefund } = request.body ?? {}
 
-    if (categoryId === undefined) {
-      return reply.code(400).send({ error: 'categoryId is required (use null to uncategorize)' })
+    if (categoryId === undefined && isRefund === undefined) {
+      return reply.code(400).send({
+        error: 'categoryId (use null to uncategorize) or isRefund is required'
+      })
     }
 
     const existing = getTransactionById(id)
     if (!existing) {
       return reply.code(404).send({ error: `No transaction found with id: ${id}` })
+    }
+
+    if (isRefund !== undefined) {
+      if (typeof isRefund !== 'boolean') {
+        return reply.code(400).send({ error: 'isRefund must be true or false' })
+      }
+      if (existing.direction !== 'in') {
+        return reply.code(400).send({ error: 'Only incoming transactions can be marked as a refund' })
+      }
+      // A refund counts against spending, so it keeps (or later gets) a category;
+      // un-marking returns it to plain income.
+      const updated = updateTransactionRefund(id, isRefund)
+      if (categoryId === undefined) return updated
     }
 
     try {

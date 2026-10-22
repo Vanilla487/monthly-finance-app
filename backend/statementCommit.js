@@ -20,6 +20,8 @@ export function commitStatement({ accountId, month, transactions }) {
         rawDescription: txn.rawDescription,
         displayName: txn.rawDescription,
         amount: txn.amount,
+        direction: txn.direction === 'in' ? 'in' : 'out',
+        isRefund: txn.direction === 'in' && !!txn.isRefund,
         categoryId: txn.categoryId ?? null,
         ruleId: txn.ruleId ?? null
       })

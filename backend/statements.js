@@ -1,4 +1,5 @@
 import db from './db.js'
+import { SPENDING_SQL, INCOME_SQL, COUNTS_AS_SPENDING_SQL } from './moneyFlow.js'
 
 export function createStatement({ accountId, month }) {
   const stmt = db.prepare(
@@ -19,7 +20,8 @@ export function getAllStatements() {
          statements.*,
          accounts.bank_type,
          accounts.custom_name,
-         COALESCE(SUM(transactions.amount), 0) AS total
+         COALESCE(SUM(${SPENDING_SQL}), 0) AS total,
+         COALESCE(SUM(${INCOME_SQL}), 0) AS total_in
        FROM statements
        JOIN accounts ON accounts.id = statements.account_id
        LEFT JOIN transactions ON transactions.statement_id = statements.id
@@ -34,9 +36,10 @@ export function getAllStatements() {
          transactions.statement_id,
          categories.name AS category_name,
          categories.color AS category_color,
-         SUM(transactions.amount) AS total
+         SUM(${SPENDING_SQL}) AS total
        FROM transactions
        LEFT JOIN categories ON categories.id = transactions.category_id
+       WHERE ${COUNTS_AS_SPENDING_SQL}
        GROUP BY transactions.statement_id, transactions.category_id`
     )
     .all()

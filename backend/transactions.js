@@ -6,13 +6,15 @@ export function createTransaction({
   rawDescription,
   displayName,
   amount,
+  direction = 'out',
+  isRefund = false,
   categoryId = null,
   ruleId = null
 }) {
   const stmt = db.prepare(
     `INSERT INTO transactions
-     (statement_id, date, raw_description, display_name, amount, category_id, rule_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+     (statement_id, date, raw_description, display_name, amount, direction, is_refund, category_id, rule_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
   const result = stmt.run(
     statementId,
@@ -20,6 +22,8 @@ export function createTransaction({
     rawDescription,
     displayName,
     amount,
+    direction,
+    isRefund ? 1 : 0,
     categoryId,
     ruleId
   )
@@ -47,6 +51,11 @@ export function updateTransactionCategory(id, categoryId) {
     categoryId,
     id
   )
+  return getTransactionById(id)
+}
+
+export function updateTransactionRefund(id, isRefund) {
+  db.prepare('UPDATE transactions SET is_refund = ? WHERE id = ?').run(isRefund ? 1 : 0, id)
   return getTransactionById(id)
 }
 
