@@ -43,8 +43,11 @@ export function buildStatementPreview({ accountId, month, csvContent, cardCsvCon
   // Card bill rows (account debit or card payoff credit) are never real money in or out:
   // without the card file the account's bill row is the only record of card spending,
   // so it's only dropped once combineWithCardStatement has replaced it.
+  //
+  // Moves between the user's own pots (N26 Spaces) appear as a matching out/in pair
+  // and are neither spending nor income, so both sides are dropped.
   const inMonth = filterToMonth(parsed, effectiveMonth).filter(
-    (txn) => txn.isOutflow || !txn.isCardSettlement
+    (txn) => !txn.isInternalTransfer && (txn.isOutflow || !txn.isCardSettlement)
   )
 
   const transactions = inMonth.map((txn) => {
