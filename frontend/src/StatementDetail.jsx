@@ -173,14 +173,23 @@ function WeekTabs({ weeks, selectedWeek, onSelect }) {
   )
 }
 
-function CategoryFilter({ categoryTotals, value, onChange }) {
+function ListFilters({ categoryTotals, categoryFilter, onCategoryChange, searchTerm, onSearchChange }) {
+  const hasFilters = categoryFilter !== 'all' || searchTerm !== ''
   return (
     <div className="list-filters">
+      <input
+        type="search"
+        className="txn-search"
+        placeholder="Search transactions"
+        aria-label="Search transactions"
+        value={searchTerm}
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
       <select
         className="plain-select"
         aria-label="Filter by category"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={categoryFilter}
+        onChange={(e) => onCategoryChange(e.target.value)}
       >
         <option value="all">All Categories</option>
         {categoryTotals.map((cat) => (
@@ -189,10 +198,29 @@ function CategoryFilter({ categoryTotals, value, onChange }) {
           </option>
         ))}
       </select>
-      {value !== 'all' && (
-        <button className="plain-button" onClick={() => onChange('all')}>Clear Filters</button>
+      {hasFilters && (
+        <button
+          className="plain-button"
+          onClick={() => {
+            onCategoryChange('all')
+            onSearchChange('')
+          }}
+        >
+          Clear Filters
+        </button>
       )}
     </div>
+  )
+}
+
+// Case-insensitive match on what's shown (display name) and what the bank sent
+// (raw description), so a renamed transaction is still found by its original text.
+function matchesSearch(transaction, searchTerm) {
+  const needle = searchTerm.trim().toLowerCase()
+  if (!needle) return true
+  return (
+    transaction.displayName?.toLowerCase().includes(needle) ||
+    transaction.rawDescription?.toLowerCase().includes(needle)
   )
 }
 
@@ -330,7 +358,7 @@ function OverflowMenu({ onDelete, deleting }) {
   )
 }
 
-function StatementDetail({ statementId, onBack }) {
+function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange }) {
   const [detail, setDetail] = useState(null)
   const [categories, setCategories] = useState([])
   const [rulesById, setRulesById] = useState({})
@@ -447,9 +475,14 @@ function StatementDetail({ statementId, onBack }) {
   }, [weekScopedTransactions, scopedTotal])
 
   const visibleTransactions = useMemo(() => {
-    if (categoryFilter === 'all') return weekScopedTransactions
-    return weekScopedTransactions.filter((t) => String(keyOf(t.categoryId)) === categoryFilter)
-  }, [weekScopedTransactions, categoryFilter])
+    return weekScopedTransactions.filter(
+      (t) =>
+        (categoryFilter === 'all' || String(keyOf(t.categoryId)) === categoryFilter) &&
+        matchesSearch(t, searchTerm)
+    )
+  }, [weekScopedTransactions, categoryFilter, searchTerm])
+
+  const visibleTotal = visibleTransactions.reduce((sum, t) => sum + t.amount, 0)
 
   const uncategorizedCount = weekScopedTransactions.filter((t) => t.categoryId == null).length
 
@@ -496,8 +529,20 @@ function StatementDetail({ statementId, onBack }) {
 
       <div className="list-controls">
         <WeekTabs weeks={nonEmptyWeeks} selectedWeek={activeWeek} onSelect={setSelectedWeek} />
-        <CategoryFilter categoryTotals={categoryTotals} value={categoryFilter} onChange={setCategoryFilter} />
+        <ListFilters
+          categoryTotals={categoryTotals}
+          categoryFilter={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+          searchTerm={searchTerm}
+          onSearchChange={onSearchChange}
+        />
       </div>
+
+      {searchTerm.trim() && (
+        <p className="search-summary">
+          {visibleTransactions.length} {visibleTransactions.length === 1 ? 'match' : 'matches'} for “{searchTerm.trim()}” · <strong>{formatAmount(visibleTotal)}</strong>
+        </p>
+      )}
 
       <div className="txn-list">
         {visibleTransactions.map((t) => (

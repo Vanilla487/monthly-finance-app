@@ -15,6 +15,9 @@ function App() {
   const [activeModal, setActiveModal] = useState(null) // null | 'add-account' | 'categories' | 'upload'
   const [preview, setPreview] = useState(null)
   const [selectedStatementId, setSelectedStatementId] = useState(null)
+  // Kept here (not in StatementDetail) so a search like "uber" stays applied
+  // when going back and opening another month's statement.
+  const [statementSearch, setStatementSearch] = useState('')
 
   function handlePreviewReady(data) {
     setPreview(data)
@@ -63,7 +66,12 @@ function App() {
       )}
 
       {screen === 'detail' && selectedStatementId && (
-        <StatementDetail statementId={selectedStatementId} onBack={handleBackToDashboard} />
+        <StatementDetail
+          statementId={selectedStatementId}
+          onBack={handleBackToDashboard}
+          searchTerm={statementSearch}
+          onSearchChange={setStatementSearch}
+        />
       )}
 
       {activeModal === 'add-account' && (
