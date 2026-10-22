@@ -20,13 +20,22 @@ export function parse(fileContent) {
     )
   }
 
+  // The export covers the main account and every Space ("Account Name"). Moving money
+  // between them shows up twice — e.g. Main Account -500 to "Emergency Fund" and
+  // Emergency Fund +500 from "Main Account" — and the pair cancels out. Neither side is
+  // spending or income, so both are flagged and dropped at import. Real people and
+  // businesses never match: they aren't Spaces in this file (and usually carry an IBAN).
+  const spaceNames = new Set(records.map((row) => row['Account Name']).filter(Boolean))
+
   return records.map((row) => {
     const amount = parseFloat(row['Amount (EUR)'])
+    const partner = row['Partner Name'] || ''
     return {
       date: row['Booking Date'],
-      rawDescription: row['Partner Name'] || row['Payment Reference'] || '',
+      rawDescription: partner || row['Payment Reference'] || '',
       amount: Math.abs(amount),
-      isOutflow: amount < 0
+      isOutflow: amount < 0,
+      isInternalTransfer: spaceNames.has(partner) && !row['Partner Iban']
     }
   })
 }

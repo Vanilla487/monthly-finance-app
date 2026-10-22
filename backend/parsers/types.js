@@ -8,6 +8,8 @@
  *     isOutflow: boolean,      // true = money leaving the account (expense)
  *     isCardSettlement?: boolean // optional: lump-sum credit card bill payment, dropped
  *                               // when the card's own export is imported alongside
+ *     isInternalTransfer?: boolean // optional: money moved between the user's own
+ *                               // pots in the same file (e.g. N26 Spaces); never counted
  *   }>
  *
  * Parsers are responsible for their own delimiter/decimal/encoding handling,
