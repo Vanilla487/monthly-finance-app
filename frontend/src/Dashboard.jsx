@@ -25,7 +25,7 @@ function CategoryBars({ breakdown, total }) {
   return (
     <div className="card-bars">
       {breakdown.map((cat) => {
-        const rawPct = total > 0 ? cat.total / total : 0
+        const rawPct = total > 0 ? Math.max(cat.total, 0) / total : 0
         const width = `${Math.sqrt(rawPct) * 100}%`
 
         return (
@@ -136,6 +136,14 @@ function Dashboard({ onUploadClick, onStatementClick, onAddAccountClick, onCateg
               <span>
                   <strong className='card-month'>{monthName}</strong> <span className="card-year">{year}</span>
                 </span>
+              {s.total_in > 0 && (
+                <span className="card-flow">
+                  In {formatTotal(s.total_in)} · Net{' '}
+                  <span className={s.total_in - s.total < 0 ? 'amount-negative' : 'amount-in'}>
+                    {s.total_in - s.total < 0 ? '−' : '+'}{formatTotal(Math.abs(s.total_in - s.total))}
+                  </span>
+                </span>
+              )}
                 
               
               <CategoryBars breakdown={s.categoryBreakdown} total={s.total} />

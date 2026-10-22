@@ -2,6 +2,7 @@ import { getStatementById } from './statements.js'
 import { getAccountById } from './accounts.js'
 import { getTransactionsByStatement } from './transactions.js'
 import { getWeekBuckets } from './weekBuckets.js'
+import { spendingAmount, incomeAmount, countsAsSpending } from './moneyFlow.js'
 
 export function buildStatementDetail(statementId) {
   const statement = getStatementById(statementId)
@@ -14,10 +15,12 @@ export function buildStatementDetail(statementId) {
   const account = getAccountById(statement.account_id)
   const transactions = getTransactionsByStatement(statementId)
 
-  const total = transactions.reduce((sum, t) => sum + t.amount, 0)
+  // total = spending (refunds already netted off); totalIn = money received
+  const total = transactions.reduce((sum, t) => sum + spendingAmount(t), 0)
+  const totalIn = transactions.reduce((sum, t) => sum + incomeAmount(t), 0)
 
   const totalsByCategory = {}
-  for (const t of transactions) {
+  for (const t of transactions.filter(countsAsSpending)) {
     const key = t.category_id ?? 'uncategorized'
     if (!totalsByCategory[key]) {
       totalsByCategory[key] = {
@@ -27,7 +30,7 @@ export function buildStatementDetail(statementId) {
         total: 0
       }
     }
-    totalsByCategory[key].total += t.amount
+    totalsByCategory[key].total += spendingAmount(t)
   }
 
   const categoryTotals = Object.values(totalsByCategory).map((c) => ({
@@ -45,7 +48,8 @@ export function buildStatementDetail(statementId) {
       month: statement.month,
       bankType: account?.bank_type,
       customName: account?.custom_name,
-      total
+      total,
+      totalIn
     },
     categoryTotals,
     weeks,
@@ -55,6 +59,8 @@ export function buildStatementDetail(statementId) {
       rawDescription: t.raw_description,
       displayName: t.display_name,
       amount: t.amount,
+      direction: t.direction,
+      isRefund: !!t.is_refund,
       categoryId: t.category_id,
       categoryName: t.category_name,
       categoryColor: t.category_color,

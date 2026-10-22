@@ -173,7 +173,7 @@ function WeekTabs({ weeks, selectedWeek, onSelect }) {
   )
 }
 
-function ListFilters({ categoryTotals, categoryFilter, onCategoryChange, searchTerm, onSearchChange }) {
+function ListFilters({ categoryTotals, categoryFilter, onCategoryChange, searchTerm, onSearchChange, showCategory = true }) {
   const hasFilters = categoryFilter !== 'all' || searchTerm !== ''
   return (
     <div className="list-filters">
@@ -185,19 +185,21 @@ function ListFilters({ categoryTotals, categoryFilter, onCategoryChange, searchT
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
       />
-      <select
-        className="plain-select"
-        aria-label="Filter by category"
-        value={categoryFilter}
-        onChange={(e) => onCategoryChange(e.target.value)}
-      >
-        <option value="all">All Categories</option>
-        {categoryTotals.map((cat) => (
-          <option key={keyOf(cat.categoryId)} value={String(keyOf(cat.categoryId))}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
+      {showCategory && (
+        <select
+          className="plain-select"
+          aria-label="Filter by category"
+          value={categoryFilter}
+          onChange={(e) => onCategoryChange(e.target.value)}
+        >
+          <option value="all">All Categories</option>
+          {categoryTotals.map((cat) => (
+            <option key={keyOf(cat.categoryId)} value={String(keyOf(cat.categoryId))}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      )}
       {hasFilters && (
         <button
           className="plain-button"
@@ -209,6 +211,52 @@ function ListFilters({ categoryTotals, categoryFilter, onCategoryChange, searchT
           Clear Filters
         </button>
       )}
+    </div>
+  )
+}
+
+// Spending view = money out plus incoming rows the user marked as refunds (which reduce
+// spending). Incoming view = everything else that came in. Mirrors backend/moneyFlow.js.
+const isSpendingRow = (t) => t.direction !== 'in' || t.isRefund
+const isIncomingRow = (t) => t.direction === 'in' && !t.isRefund
+const spendingAmount = (t) => (t.direction === 'in' ? -t.amount : t.amount)
+
+function formatSignedAmount(t) {
+  if (t.direction !== 'in') return formatAmount(t.amount)
+  return `${t.isRefund ? '−' : '+'}${formatAmount(t.amount)}`
+}
+
+function MoneySummary({ totalOut, totalIn }) {
+  const net = totalIn - totalOut
+  return (
+    <div className="money-summary">
+      <div className="money-stat">
+        <span className="money-stat-label">Out</span>
+        <span className="money-stat-value">{formatAmount(totalOut)}</span>
+      </div>
+      <div className="money-stat">
+        <span className="money-stat-label">In</span>
+        <span className="money-stat-value amount-in">{formatAmount(totalIn)}</span>
+      </div>
+      <div className="money-stat">
+        <span className="money-stat-label">Net</span>
+        <span className={`money-stat-value ${net < 0 ? 'amount-negative' : 'amount-in'}`}>
+          {net < 0 ? '−' : '+'}{formatAmount(Math.abs(net))}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function ViewSwitch({ view, onChange, incomingCount }) {
+  return (
+    <div className="view-switch" role="tablist" aria-label="Show spending or incoming">
+      <button role="tab" aria-selected={view === 'spending'} className={view === 'spending' ? 'active' : ''} onClick={() => onChange('spending')}>
+        Spending
+      </button>
+      <button role="tab" aria-selected={view === 'incoming'} className={view === 'incoming' ? 'active' : ''} onClick={() => onChange('incoming')}>
+        Incoming{incomingCount > 0 ? ` (${incomingCount})` : ''}
+      </button>
     </div>
   )
 }
@@ -365,6 +413,7 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
   const [hoveredKey, setHoveredKey] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [view, setView] = useState('spending') // 'spending' | 'incoming'
   const [openTransactionId, setOpenTransactionId] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -407,6 +456,13 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
     setOpenTransactionId(null)
   }
 
+  function handleRefundChanged(transactionId, isRefund) {
+    setDetail((prev) => ({
+      ...prev,
+      transactions: prev.transactions.map((t) => (t.id === transactionId ? { ...t, isRefund } : t))
+    }))
+  }
+
   async function handleDeleteStatement() {
     if (!window.confirm('Delete this statement and all its transactions? This cannot be undone.')) {
       return
@@ -428,36 +484,49 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
     }
   }
 
-  // Only weeks that contain at least one transaction get a tab.
+  const viewRows = useMemo(() => {
+    if (!detail) return []
+    return detail.transactions.filter(view === 'spending' ? isSpendingRow : isIncomingRow)
+  }, [detail, view])
+
+  const incomingCount = detail ? detail.transactions.filter(isIncomingRow).length : 0
+
+  // Only weeks that contain at least one transaction (in the current view) get a tab.
   const nonEmptyWeeks = useMemo(() => {
     if (!detail) return []
-    return detail.weeks.filter((w) =>
-      detail.transactions.some((t) => t.date >= w.startDate && t.date <= w.endDate)
-    )
-  }, [detail])
+    return detail.weeks.filter((w) => viewRows.some((t) => t.date >= w.startDate && t.date <= w.endDate))
+  }, [detail, viewRows])
 
   // If the selected week becomes empty (e.g. its last transaction was deleted), fall back to Show All.
   const activeWeek = nonEmptyWeeks.some((w) => w.weekNumber === selectedWeek) ? selectedWeek : null
 
-  const weekScopedTransactions = useMemo(() => {
-    if (!detail) return []
-    if (activeWeek === null) return detail.transactions
-
-    const week = detail.weeks.find((w) => w.weekNumber === activeWeek)
-    if (!week) return detail.transactions
-
-    return detail.transactions.filter((t) => t.date >= week.startDate && t.date <= week.endDate)
+  const inActiveWeek = useMemo(() => {
+    const week = detail?.weeks.find((w) => w.weekNumber === activeWeek)
+    return week ? (t) => t.date >= week.startDate && t.date <= week.endDate : () => true
   }, [detail, activeWeek])
 
-  const scopedTotal = useMemo(
-    () => weekScopedTransactions.reduce((sum, t) => sum + t.amount, 0),
-    [weekScopedTransactions]
+  // Charts and Out/In/Net always describe the (week-scoped) month, whichever list is shown.
+  const scopedSpending = useMemo(
+    () => (detail ? detail.transactions.filter((t) => isSpendingRow(t) && inActiveWeek(t)) : []),
+    [detail, inActiveWeek]
+  )
+  const scopedIncomingTotal = useMemo(
+    () =>
+      detail
+        ? detail.transactions.filter((t) => isIncomingRow(t) && inActiveWeek(t)).reduce((sum, t) => sum + t.amount, 0)
+        : 0,
+    [detail, inActiveWeek]
   )
 
-  // Per-category totals for the current week scope, largest first.
+  const scopedTotal = useMemo(
+    () => scopedSpending.reduce((sum, t) => sum + spendingAmount(t), 0),
+    [scopedSpending]
+  )
+
+  // Per-category spending for the current week scope (refunds netted off), largest first.
   const categoryTotals = useMemo(() => {
     const byCategory = {}
-    for (const t of weekScopedTransactions) {
+    for (const t of scopedSpending) {
       const key = keyOf(t.categoryId)
       if (!byCategory[key]) {
         byCategory[key] = {
@@ -467,24 +536,31 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
           total: 0
         }
       }
-      byCategory[key].total += t.amount
+      byCategory[key].total += spendingAmount(t)
     }
     return Object.values(byCategory)
-      .map((c) => ({ ...c, percentage: scopedTotal > 0 ? (c.total / scopedTotal) * 100 : 0 }))
+      .map((c) => ({ ...c, percentage: scopedTotal > 0 ? (Math.max(c.total, 0) / scopedTotal) * 100 : 0 }))
       .sort((a, b) => b.total - a.total)
-  }, [weekScopedTransactions, scopedTotal])
+  }, [scopedSpending, scopedTotal])
+
+  // A category holding only a refund nets below zero; it can't be drawn as a bar or slice.
+  const chartTotals = categoryTotals.filter((c) => c.total > 0)
 
   const visibleTransactions = useMemo(() => {
-    return weekScopedTransactions.filter(
+    return viewRows.filter(
       (t) =>
-        (categoryFilter === 'all' || String(keyOf(t.categoryId)) === categoryFilter) &&
+        inActiveWeek(t) &&
+        (view !== 'spending' || categoryFilter === 'all' || String(keyOf(t.categoryId)) === categoryFilter) &&
         matchesSearch(t, searchTerm)
     )
-  }, [weekScopedTransactions, categoryFilter, searchTerm])
+  }, [viewRows, inActiveWeek, view, categoryFilter, searchTerm])
 
-  const visibleTotal = visibleTransactions.reduce((sum, t) => sum + t.amount, 0)
+  const visibleTotal = visibleTransactions.reduce(
+    (sum, t) => sum + (view === 'spending' ? spendingAmount(t) : t.amount),
+    0
+  )
 
-  const uncategorizedCount = weekScopedTransactions.filter((t) => t.categoryId == null).length
+  const uncategorizedCount = scopedSpending.filter((t) => t.categoryId == null).length
 
   if (!detail) return <p>Loading…</p>
 
@@ -513,19 +589,28 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
             <h2 className="detail-month">{monthName}</h2>
             <span className="detail-year">{year}</span>
           </div>
-          <CategoryBars categoryTotals={categoryTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+          <MoneySummary totalOut={scopedTotal} totalIn={scopedIncomingTotal} />
+          <CategoryBars categoryTotals={chartTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
           {uncategorizedCount > 0 && categoryFilter !== 'uncategorized' && (
-            <button className="uncategorized-hint" onClick={() => setCategoryFilter('uncategorized')}>
+            <button
+              className="uncategorized-hint"
+              onClick={() => {
+                setView('spending')
+                setCategoryFilter('uncategorized')
+              }}
+            >
               {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'transaction' : 'transactions'} · Review
             </button>
           )}
         </div>
 
         <div className="detail-summary-right">
-          <Donut categoryTotals={categoryTotals} total={scopedTotal} hoveredKey={hoveredKey} onHover={setHoveredKey} />
-          <DonutLegend categoryTotals={categoryTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+          <Donut categoryTotals={chartTotals} total={scopedTotal} hoveredKey={hoveredKey} onHover={setHoveredKey} />
+          <DonutLegend categoryTotals={chartTotals} hoveredKey={hoveredKey} onHover={setHoveredKey} />
         </div>
       </div>
+
+      <ViewSwitch view={view} onChange={setView} incomingCount={incomingCount} />
 
       <div className="list-controls">
         <WeekTabs weeks={nonEmptyWeeks} selectedWeek={activeWeek} onSelect={setSelectedWeek} />
@@ -535,12 +620,13 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
           onCategoryChange={setCategoryFilter}
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
+          showCategory={view === 'spending'}
         />
       </div>
 
       {searchTerm.trim() && (
         <p className="search-summary">
-          {visibleTransactions.length} {visibleTransactions.length === 1 ? 'match' : 'matches'} for “{searchTerm.trim()}” · <strong>{formatAmount(visibleTotal)}</strong>
+          {visibleTransactions.length} {visibleTransactions.length === 1 ? 'match' : 'matches'} for “{searchTerm.trim()}” · <strong>{visibleTotal < 0 ? '−' : ''}{formatAmount(Math.abs(visibleTotal))}</strong>
         </p>
       )}
 
@@ -563,13 +649,22 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
             <span className="txn-name" title={t.rawDescription}>{t.displayName}</span>
             {/* Category picker and rule tooltip have their own interactions; don't open the modal. */}
             <span className="txn-meta" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-              <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
+              {isSpendingRow(t) && (
+                <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
+              )}
+              {t.isRefund && <span className="refund-tag">Refund</span>}
               <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
             </span>
-            <span className="txn-amount">{formatAmount(t.amount)}</span>
+            <span className={`txn-amount ${t.direction === 'in' ? 'amount-in' : ''}`}>{formatSignedAmount(t)}</span>
           </div>
         ))}
-        {visibleTransactions.length === 0 && <p className="txn-empty">No transactions match these filters.</p>}
+        {visibleTransactions.length === 0 && (
+          <p className="txn-empty">
+            {view === 'incoming' && viewRows.length === 0
+              ? 'No incoming money stored for this month. Statements uploaded before incoming was tracked need re-uploading to show it.'
+              : 'No transactions match these filters.'}
+          </p>
+        )}
       </div>
 
       {openTransaction && (
@@ -579,6 +674,7 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
           accountName={detail.statement.customName}
           onClose={() => setOpenTransactionId(null)}
           onDeleted={handleTransactionDeleted}
+          onRefundChanged={handleRefundChanged}
         />
       )}
     </div>

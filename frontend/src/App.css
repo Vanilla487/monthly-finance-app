@@ -1268,3 +1268,100 @@
   gap: 16px;
   margin-bottom: 8px;
 }
+
+/* Incoming money */
+.amount-in {
+  color: #018E42;
+}
+
+.amount-negative {
+  color: #dc2626;
+}
+
+.card-flow {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.money-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.money-stat {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.money-stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.money-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.view-switch {
+  display: inline-flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 8px 0 12px;
+}
+
+.view-switch button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.view-switch button.active {
+  background: #f1f5f9;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.refund-tag {
+  font-size: 12px;
+  color: #018E42;
+  border: 1px solid #018E42;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.refund-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.refund-toggle p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.review-incoming {
+  margin-top: 24px;
+}
+
+.review-incoming p {
+  color: var(--text-secondary);
+}

@@ -40,15 +40,22 @@ export function buildStatementPreview({ accountId, month, csvContent, cardCsvCon
     parsed = combineWithCardStatement(accountParsed, parseCard(cardCsvContent))
   }
 
-  const inMonth = filterToMonth(parsed, effectiveMonth)
-  const expensesOnly = inMonth.filter((txn) => txn.isOutflow)
+  // Card bill rows (account debit or card payoff credit) are never real money in or out:
+  // without the card file the account's bill row is the only record of card spending,
+  // so it's only dropped once combineWithCardStatement has replaced it.
+  const inMonth = filterToMonth(parsed, effectiveMonth).filter(
+    (txn) => txn.isOutflow || !txn.isCardSettlement
+  )
 
-  const transactions = expensesOnly.map((txn) => {
-    const match = findMatchingRule(txn.rawDescription)
+  const transactions = inMonth.map((txn) => {
+    // Rules categorise spending only; incoming money starts uncategorised and gets a
+    // category if the user marks it as a refund.
+    const match = txn.isOutflow ? findMatchingRule(txn.rawDescription) : null
     return {
       date: txn.date,
       rawDescription: txn.rawDescription,
       amount: txn.amount,
+      direction: txn.isOutflow ? 'out' : 'in',
       categoryId: match?.category_id ?? null,
       categoryName: match?.category_name ?? null,
       categoryColor: match?.category_color ?? null,

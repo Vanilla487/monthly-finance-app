@@ -15,10 +15,32 @@ function formatLongDate(isoDate) {
   }).format(new Date(Date.UTC(y, m - 1, d)))
 }
 
-function TransactionModal({ transaction, rule, accountName, onClose, onDeleted }) {
+function TransactionModal({ transaction, rule, accountName, onClose, onDeleted, onRefundChanged }) {
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [savingRefund, setSavingRefund] = useState(false)
   const [error, setError] = useState(null)
+
+  const isIncoming = transaction.direction === 'in'
+
+  async function handleToggleRefund() {
+    setSavingRefund(true)
+    setError(null)
+    try {
+      const response = await fetch(`http://localhost:3000/api/transactions/${transaction.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isRefund: !transaction.isRefund })
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Failed to update refund')
+      onRefundChanged?.(transaction.id, !!data.is_refund)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSavingRefund(false)
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true)
@@ -39,7 +61,9 @@ function TransactionModal({ transaction, rule, accountName, onClose, onDeleted }
   }
 
   let ruleText = 'Manually categorized'
-  if (transaction.ruleId) {
+  if (isIncoming && !transaction.isRefund) {
+    ruleText = 'Money received — not counted as spending'
+  } else if (transaction.ruleId) {
     ruleText = rule ? `Rule: description contains “${rule.substring}”` : 'Matched by a rule'
   } else if (!transaction.categoryId) {
     ruleText = 'Not categorized yet'
@@ -60,14 +84,34 @@ function TransactionModal({ transaction, rule, accountName, onClose, onDeleted }
           </button>
         </div>
 
-        <p className="txn-modal-amount">{euroFormat.format(transaction.amount)}</p>
+        <p className={`txn-modal-amount ${isIncoming ? 'amount-in' : ''}`}>
+          {isIncoming ? (transaction.isRefund ? '−' : '+') : ''}
+          {euroFormat.format(transaction.amount)}
+        </p>
+
+        {isIncoming && (
+          <div className="refund-toggle">
+            <p>
+              {transaction.isRefund
+                ? 'Counted as a refund: it comes off this month’s spending, under its category.'
+                : 'Counted as incoming money. If it’s money back for something she bought, mark it as a refund to take it off spending.'}
+            </p>
+            <button className="btn-secondary" onClick={handleToggleRefund} disabled={savingRefund}>
+              {savingRefund ? 'Saving…' : transaction.isRefund ? 'Not a refund' : 'Mark as refund'}
+            </button>
+          </div>
+        )}
 
         <dl className="txn-modal-details">
-          <dt>Category</dt>
-          <dd>
-            <span className="dot" style={{ background: `var(--cat-${transaction.categoryColor || 'grey'})` }} />
-            {transaction.categoryName || 'Uncategorized'}
-          </dd>
+          {(!isIncoming || transaction.isRefund) && (
+            <>
+              <dt>Category</dt>
+              <dd>
+                <span className="dot" style={{ background: `var(--cat-${transaction.categoryColor || 'grey'})` }} />
+                {transaction.categoryName || 'Uncategorized'}
+              </dd>
+            </>
+          )}
 
           <dt>How</dt>
           <dd>{ruleText}</dd>

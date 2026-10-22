@@ -185,7 +185,8 @@ function CategorizeReview({ preview, onCancel, onCommitted }) {
     setSavedRuleIndexes((prev) => new Set(prev).add(index))
   }
 
-  const needsCategoryCount = transactions.filter((t) => !t.categoryId).length
+  const needsCategoryCount = transactions.filter((t) => t.direction !== 'in' && !t.categoryId).length
+  const incoming = transactions.filter((t) => t.direction === 'in')
 
   async function handleCreateStatement() {
     const payload = {
@@ -195,6 +196,7 @@ function CategorizeReview({ preview, onCancel, onCommitted }) {
         date: t.date,
         rawDescription: t.rawDescription,
         amount: t.amount,
+        direction: t.direction,
         categoryId: t.categoryId,
         ruleId: t.ruleId
       }))
@@ -219,6 +221,7 @@ function CategorizeReview({ preview, onCancel, onCommitted }) {
 
       <div className="transaction-list">
         {transactions.map((txn, index) => {
+          if (txn.direction === 'in') return null
           const selected = txn.categoryId
             ? { id: txn.categoryId, name: txn.categoryName, color: txn.categoryColor }
             : null
@@ -262,6 +265,23 @@ function CategorizeReview({ preview, onCancel, onCommitted }) {
           )
         })}
       </div>
+
+      {incoming.length > 0 && (
+        <div className="review-incoming">
+          <h3>Incoming</h3>
+          <p>Money received this month. No category needed — if one is a refund, mark it on the statement afterwards and it'll come off spending.</p>
+          <div className="transaction-list">
+            {incoming.map((txn, index) => (
+              <div className="transaction-row" key={`in-${txn.date}-${txn.rawDescription}-${index}`}>
+                <span>{formatDate(txn.date)}</span>
+                <span><strong>{txn.rawDescription}</strong></span>
+                <span className="amount-in">+{formatAmount(txn.amount)}</span>
+                <div />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="modal-actions">
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
