@@ -11,6 +11,9 @@ import { parseGermanAmount, parseGermanDate } from './germanFormat.js'
 // - Name / Verwendungszweck sometimes have leading spaces
 // - Credit card settlements put the text in Name and leave Verwendungszweck empty
 // - PayPal rows all share the PayPal company name; the merchant is only in Verwendungszweck
+// - apoBank has no debit card, so card spending arrives as one "Kreditkartenabrechnung"
+//   row a month later. Those rows are flagged `isCardSettlement` so the import can drop
+//   them when the credit card export is uploaded alongside (see combineCardStatement.js).
 
 const HEADER_START = 'Datum;Name;Verwendungszweck'
 const REQUIRED_COLUMNS = ['Datum', 'Name', 'Verwendungszweck', 'Betrag (EUR)']
@@ -61,7 +64,8 @@ export function parse(fileContent) {
         date: parseGermanDate(row['Datum'].trim()),
         rawDescription: pickDescription(row['Name'].trim(), row['Verwendungszweck'].trim()),
         amount: Math.abs(amount),
-        isOutflow: amount < 0
+        isOutflow: amount < 0,
+        isCardSettlement: (row['Auftragsart'] || '').trim() === 'Kreditkartenabrechnung'
       }
     })
 }

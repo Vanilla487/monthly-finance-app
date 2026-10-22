@@ -5,7 +5,9 @@
  *     date: string,            // ISO format, e.g. "2026-06-01"
  *     rawDescription: string,  // untouched, exactly as it appeared in the CSV
  *     amount: number,          // always positive (unsigned)
- *     isOutflow: boolean       // true = money leaving the account (expense)
+ *     isOutflow: boolean,      // true = money leaving the account (expense)
+ *     isCardSettlement?: boolean // optional: lump-sum credit card bill payment, dropped
+ *                               // when the card's own export is imported alongside
  *   }>
  *
  * Parsers are responsible for their own delimiter/decimal/encoding handling,
