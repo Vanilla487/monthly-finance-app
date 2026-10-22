@@ -9,7 +9,8 @@
 // had been used.
 export function combineWithCardStatement(accountTransactions, cardTransactions) {
   const accountWithoutSettlements = accountTransactions.filter((txn) => !txn.isCardSettlement)
-  return [...accountWithoutSettlements, ...cardTransactions].sort((a, b) =>
+  const cardPurchases = cardTransactions.filter((txn) => !txn.isCardSettlement)
+  return [...accountWithoutSettlements, ...cardPurchases].sort((a, b) =>
     b.date.localeCompare(a.date)
   )
 }

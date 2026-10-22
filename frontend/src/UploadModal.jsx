@@ -191,7 +191,7 @@ function UploadModal({ onCancel, onPreviewReady }) {
           {needsCardFile && (
             <Dropzone
               label="Drop the credit card CSV here"
-              hint="or click to browse · credit card export for the same month"
+              hint="or click to browse · export it from the 1st to the last day of the month (a wider range is fine)"
               file={cardFile}
               loading={loading}
               onFile={handleCardFile}

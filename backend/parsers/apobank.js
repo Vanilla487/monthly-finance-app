@@ -1,7 +1,8 @@
 import { parse as parseCsv } from 'csv-parse/sync'
 import { parseGermanAmount, parseGermanDate } from './germanFormat.js'
 
-// apoBank online banking "Buchungsliste" export:
+// apoBank online banking "Buchungsliste" export of the account (Girokonto).
+// The credit card export uses the same columns — see apobank-card.js.
 //   Datum;Name;Verwendungszweck;Auftragsart;Betrag (EUR);Saldo (EUR)
 //   30.09.2026;"PayPal Europe ...";"... Ihr Einkauf bei Spotify AB";Lastschrift;"-12,99";"2.402,51"
 //
@@ -26,8 +27,13 @@ function pickDescription(name, reference) {
   return name || reference || ''
 }
 
-export function parse(fileContent) {
-  const content = fileContent.replace(/^﻿/, '')
+// Card purchases in the credit card export (same columns as the account export)
+export const CARD_BOOKING = 'Kreditkartenbuchung'
+
+// Reads either apoBank export (account or credit card — both share these columns)
+// into raw CSV records, with the format checks both need.
+export function readApoBankRecords(fileContent) {
+  const content = fileContent.replace(/^\uFEFF/, '')
   const lines = content.split(/\r?\n/)
 
   // Skip any metadata lines above the header row
@@ -58,14 +64,30 @@ export function parse(fileContent) {
 
   return records
     .filter((row) => row['Datum'] && row['Betrag (EUR)'])
-    .map((row) => {
-      const amount = parseGermanAmount(row['Betrag (EUR)'])
-      return {
-        date: parseGermanDate(row['Datum'].trim()),
-        rawDescription: pickDescription(row['Name'].trim(), row['Verwendungszweck'].trim()),
-        amount: Math.abs(amount),
-        isOutflow: amount < 0,
-        isCardSettlement: (row['Auftragsart'] || '').trim() === 'Kreditkartenabrechnung'
-      }
-    })
+    .map((row) => ({
+      date: parseGermanDate(row['Datum'].trim()),
+      name: (row['Name'] || '').trim(),
+      reference: (row['Verwendungszweck'] || '').trim(),
+      orderType: (row['Auftragsart'] || '').trim(),
+      amount: parseGermanAmount(row['Betrag (EUR)'])
+    }))
+}
+
+export function parse(fileContent) {
+  const records = readApoBankRecords(fileContent)
+
+  // Both exports share the same columns, so catch the card file in the account slot
+  if (records.every((r) => r.orderType === CARD_BOOKING)) {
+    throw new Error(
+      'This looks like the apoBank credit card export, not the account statement — upload it as the credit card file'
+    )
+  }
+
+  return records.map((r) => ({
+    date: r.date,
+    rawDescription: pickDescription(r.name, r.reference),
+    amount: Math.abs(r.amount),
+    isOutflow: r.amount < 0,
+    isCardSettlement: r.orderType === 'Kreditkartenabrechnung'
+  }))
 }
