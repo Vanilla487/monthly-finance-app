@@ -1,6 +1,7 @@
 import { parse as parseN26 } from './parsers/n26.js'
 import { parse as parseDeutscheBank } from './parsers/deutsche-bank.js'
 import { parse as parseApoBank } from './parsers/apobank.js'
+import { parse as parseApoBankCard } from './parsers/apobank-card.js'
 
 export const BANK_REGISTRY = {
   n26: {
@@ -16,7 +17,12 @@ export const BANK_REGISTRY = {
   apobank: {
     label: 'apoBank',
     iconAsset: 'apobank',
-    parserModule: parseApoBank
+    parserModule: parseApoBank,
+    // No debit card at apoBank: card spending comes from a separate credit card export
+    cardStatement: {
+      label: 'Credit card',
+      parserModule: parseApoBankCard
+    }
   }
 }
 
@@ -32,6 +38,15 @@ export function getParserForBankType(bankType) {
   return entry.parserModule
 }
 
+export function getCardParserForBankType(bankType) {
+  const entry = BANK_REGISTRY[bankType]
+  if (!entry?.cardStatement) {
+    const label = entry?.label ?? bankType
+    throw new Error(`${label} accounts don't take a separate credit card statement`)
+  }
+  return entry.cardStatement.parserModule
+}
+
 export function getBankLabel(bankType) {
   return BANK_REGISTRY[bankType]?.label ?? bankType
 }
@@ -40,6 +55,7 @@ export function listBankTypes() {
   return Object.entries(BANK_REGISTRY).map(([bankType, entry]) => ({
     bankType,
     label: entry.label,
-    iconAsset: entry.iconAsset
+    iconAsset: entry.iconAsset,
+    supportsCardStatement: !!entry.cardStatement
   }))
 }

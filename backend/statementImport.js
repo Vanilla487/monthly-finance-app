@@ -1,6 +1,7 @@
 import { getAccountById } from './accounts.js'
-import { getParserForBankType } from './bankRegistry.js'
+import { getParserForBankType, getCardParserForBankType } from './bankRegistry.js'
 import { filterToMonth } from './parsers/monthFilter.js'
+import { combineWithCardStatement } from './parsers/combineCardStatement.js'
 import { findMatchingRule } from './rules.js'
 
 function inferMonth(transactions) {
@@ -13,7 +14,7 @@ function inferMonth(transactions) {
   return sorted[0]?.[0]
 }
 
-export function buildStatementPreview({ accountId, month, csvContent }) {
+export function buildStatementPreview({ accountId, month, csvContent, cardCsvContent }) {
   const account = getAccountById(accountId)
   if (!account) {
     const err = new Error(`No account found with id: ${accountId}`)
@@ -22,13 +23,21 @@ export function buildStatementPreview({ accountId, month, csvContent }) {
   }
 
   const parse = getParserForBankType(account.bank_type)
-  const parsed = parse(csvContent)
+  const accountParsed = parse(csvContent)
 
-  const effectiveMonth = month || inferMonth(parsed)
+  // Month comes from the account statement; the card export may span a billing
+  // period that crosses month boundaries, so it doesn't get a vote.
+  const effectiveMonth = month || inferMonth(accountParsed)
   if (!effectiveMonth) {
     const err = new Error('Could not determine a month — CSV has no transactions')
     err.statusCode = 400
     throw err
+  }
+
+  let parsed = accountParsed
+  if (cardCsvContent) {
+    const parseCard = getCardParserForBankType(account.bank_type)
+    parsed = combineWithCardStatement(accountParsed, parseCard(cardCsvContent))
   }
 
   const inMonth = filterToMonth(parsed, effectiveMonth)

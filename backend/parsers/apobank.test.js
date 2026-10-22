@@ -30,6 +30,9 @@ assert.equal(rent.date, '2026-09-29')
 const card = results.find((t) => t.rawDescription.includes('KARTENDOPPEL'))
 assert.equal(card.amount, 643.71)
 
+// The monthly credit card bill is flagged, nothing else is
+assert.deepEqual(results.filter((t) => t.isCardSettlement), [card])
+
 // Umlauts survive Windows-1252 decoding
 assert.ok(results.some((t) => t.rawDescription === 'Universität Münster'))
 
@@ -57,8 +60,8 @@ const utf8 = [
 ].join('\r\n')
 const utf8Results = parse(utf8)
 assert.deepEqual(utf8Results, [
-  { date: '2026-10-01', rawDescription: 'Rundfunk ARD, ZDF, DRadio', amount: 55.08, isOutflow: true },
-  { date: '2026-10-22', rawDescription: 'Erika Mustermann', amount: 1000, isOutflow: false }
+  { date: '2026-10-01', rawDescription: 'Rundfunk ARD, ZDF, DRadio', amount: 55.08, isOutflow: true, isCardSettlement: false },
+  { date: '2026-10-22', rawDescription: 'Erika Mustermann', amount: 1000, isOutflow: false, isCardSettlement: false }
 ])
 
 // --- Test 3: other banks' files throw a clear format error ---

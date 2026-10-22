@@ -108,6 +108,39 @@
   background: #f8fafc;
 }
 
+.dropzone.has-file {
+  border-style: solid;
+  border-color: #94a3b8;
+}
+
+.dropzones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dropzones .dropzone {
+  padding: 32px;
+}
+
+.card-statement-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  cursor: pointer;
+}
+
+.card-statement-toggle input {
+  margin-top: 3px;
+}
+
+.card-statement-toggle small {
+  display: block;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: space-between;

@@ -6,7 +6,7 @@ import { deleteStatementCascade } from '../statementDelete.js'
 
 export default async function statementsRoutes(fastify) {
   fastify.post('/api/statements/preview', async (request, reply) => {
-    const { accountId, month, csvContent } = request.body
+    const { accountId, month, csvContent, cardCsvContent } = request.body
 
     if (!accountId || !csvContent) {
       return reply.code(400).send({
@@ -15,7 +15,7 @@ export default async function statementsRoutes(fastify) {
     }
 
     try {
-      const preview = buildStatementPreview({ accountId, month, csvContent })
+      const preview = buildStatementPreview({ accountId, month, csvContent, cardCsvContent })
       return preview
     } catch (err) {
       const statusCode = err.statusCode ?? 400
