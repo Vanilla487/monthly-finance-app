@@ -3,6 +3,7 @@ import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
 import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
 import apobankLogo from './assets/apobank.svg'
 import TransactionModal from './TransactionModal'
+import AddTransactionModal from './AddTransactionModal'
 
 const BANK_LOGOS = { n26: n26Logo, db: dbLogo, apobank: apobankLogo }
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -367,7 +368,7 @@ function CategoryPicker({ transaction, categories, onCategoryChanged }) {
   )
 }
 
-function OverflowMenu({ onDelete, deleting }) {
+function OverflowMenu({ onAddTransaction, onDelete, deleting }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -389,6 +390,16 @@ function OverflowMenu({ onDelete, deleting }) {
       </button>
       {open && (
         <div className="category-menu overflow-menu-list" role="menu">
+          <button
+            role="menuitem"
+            className="category-menu-item"
+            onClick={() => {
+              setOpen(false)
+              onAddTransaction()
+            }}
+          >
+            Add transaction
+          </button>
           <button
             role="menuitem"
             className="category-menu-item danger"
@@ -414,14 +425,19 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [view, setView] = useState('spending') // 'spending' | 'incoming'
+  const [addingTransaction, setAddingTransaction] = useState(false)
   const [openTransactionId, setOpenTransactionId] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
 
-  useEffect(() => {
-    fetch(`http://localhost:3000/api/statements/${statementId}`)
+  function loadDetail() {
+    return fetch(`http://localhost:3000/api/statements/${statementId}`)
       .then((res) => res.json())
       .then(setDetail)
+  }
+
+  useEffect(() => {
+    loadDetail()
     fetch('http://localhost:3000/api/categories')
       .then((res) => res.json())
       .then(setCategories)
@@ -429,7 +445,15 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
       .then((res) => res.json())
       .then((rules) => setRulesById(Object.fromEntries(rules.map((r) => [r.id, r]))))
       .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statementId])
+
+  async function handleTransactionAdded(created) {
+    setAddingTransaction(false)
+    await loadDetail()
+    // Show the list the new transaction landed in
+    setView(created.direction === 'in' && !created.is_refund ? 'incoming' : 'spending')
+  }
 
   function handleCategoryChanged(transactionId, updated) {
     const category = categories.find((c) => c.id === updated.category_id)
@@ -574,7 +598,11 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
     <div className="statement-detail">
       <div className="detail-topbar">
         <button className="back-link" onClick={onBack}>&lt; back to statements</button>
-        <OverflowMenu onDelete={handleDeleteStatement} deleting={deleting} />
+        <OverflowMenu
+          onAddTransaction={() => setAddingTransaction(true)}
+          onDelete={handleDeleteStatement}
+          deleting={deleting}
+        />
       </div>
       {deleteError && <p className="form-error">{deleteError}</p>}
 
@@ -653,6 +681,7 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
                 <CategoryPicker transaction={t} categories={categories} onCategoryChanged={handleCategoryChanged} />
               )}
               {t.isRefund && <span className="refund-tag">Refund</span>}
+              {t.isManual && <span className="manual-tag" title="Added by hand">Added</span>}
               <RuleIcon ruleId={t.ruleId} rule={rulesById[t.ruleId]} />
             </span>
             <span className={`txn-amount ${t.direction === 'in' ? 'amount-in' : ''}`}>{formatSignedAmount(t)}</span>
@@ -666,6 +695,16 @@ function StatementDetail({ statementId, onBack, searchTerm = '', onSearchChange 
           </p>
         )}
       </div>
+
+      {addingTransaction && (
+        <AddTransactionModal
+          statementId={detail.statement.id}
+          month={detail.statement.month}
+          categories={categories}
+          onClose={() => setAddingTransaction(false)}
+          onAdded={handleTransactionAdded}
+        />
+      )}
 
       {openTransaction && (
         <TransactionModal

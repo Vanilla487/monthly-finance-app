@@ -1,4 +1,6 @@
+import { getStatementById } from '../statements.js'
 import {
+  createTransaction,
   getTransactionById,
   updateTransactionCategory,
   updateTransactionRefund,
@@ -6,6 +8,58 @@ import {
 } from '../transactions.js'
 
 export default async function transactionsRoutes(fastify) {
+  // Add a transaction by hand, e.g. a payment the bank file didn't include.
+  fastify.post('/api/transactions', async (request, reply) => {
+    const { statementId, date, name, amount, direction, categoryId = null, isRefund = false } =
+      request.body ?? {}
+
+    const statement = statementId ? getStatementById(statementId) : null
+    if (!statement) {
+      return reply.code(404).send({ error: `No statement found with id: ${statementId}` })
+    }
+    if (typeof name !== 'string' || !name.trim()) {
+      return reply.code(400).send({ error: 'Enter a name' })
+    }
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+      return reply.code(400).send({ error: 'Enter an amount above zero' })
+    }
+    if (direction !== 'in' && direction !== 'out') {
+      return reply.code(400).send({ error: "direction must be 'in' or 'out'" })
+    }
+    const isRealDate =
+      typeof date === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+      !Number.isNaN(Date.parse(date)) &&
+      new Date(date).toISOString().slice(0, 10) === date
+    if (!isRealDate || !date.startsWith(statement.month)) {
+      return reply.code(400).send({ error: `Pick a date in this statement's month (${statement.month})` })
+    }
+    if (isRefund && direction !== 'in') {
+      return reply.code(400).send({ error: 'Only incoming transactions can be a refund' })
+    }
+
+    try {
+      const created = createTransaction({
+        statementId: statement.id,
+        date,
+        rawDescription: name.trim(),
+        displayName: name.trim(),
+        amount: Math.round(amount * 100) / 100,
+        direction,
+        isRefund: !!isRefund,
+        isManual: true,
+        // Plain income has no category; spending and refunds can have one
+        categoryId: direction === 'in' && !isRefund ? null : categoryId
+      })
+      return reply.code(201).send(created)
+    } catch (err) {
+      if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        return reply.code(400).send({ error: `No category found with id: ${categoryId}` })
+      }
+      return reply.code(400).send({ error: err.message })
+    }
+  })
+
   fastify.patch('/api/transactions/:id', async (request, reply) => {
     const { id } = request.params
     const { categoryId, isRefund } = request.body ?? {}
