@@ -61,7 +61,9 @@ function TransactionModal({ transaction, rule, accountName, onClose, onDeleted, 
   }
 
   let ruleText = 'Manually categorized'
-  if (isIncoming && !transaction.isRefund) {
+  if (transaction.isManual) {
+    ruleText = 'Added by hand — kept if the statement is re-uploaded'
+  } else if (isIncoming && !transaction.isRefund) {
     ruleText = 'Money received — not counted as spending'
   } else if (transaction.ruleId) {
     ruleText = rule ? `Rule: description contains “${rule.substring}”` : 'Matched by a rule'

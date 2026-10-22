@@ -61,6 +61,7 @@ export function buildStatementDetail(statementId) {
       amount: t.amount,
       direction: t.direction,
       isRefund: !!t.is_refund,
+      isManual: !!t.is_manual,
       categoryId: t.category_id,
       categoryName: t.category_name,
       categoryColor: t.category_color,

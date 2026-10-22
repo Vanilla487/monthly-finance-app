@@ -1365,3 +1365,68 @@
 .review-incoming p {
   color: var(--text-secondary);
 }
+
+/* Add transaction */
+.manual-tag {
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.add-txn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-txn-form h3 {
+  margin: 0;
+}
+
+.add-txn-form .view-switch {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.add-txn-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.add-txn-form input[type="text"],
+.add-txn-form input[type="date"],
+.add-txn-form select {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.add-txn-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.add-txn-form .add-txn-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.add-txn-check input {
+  margin-top: 3px;
+}
+
+.add-txn-check small {
+  display: block;
+  margin-top: 2px;
+}
