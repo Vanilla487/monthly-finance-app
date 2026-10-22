@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import n26Logo from './assets/N26_idQBiV8Ehj_0.svg'
 import dbLogo from './assets/Deutsche_Bank_id8uM_LXr8_0.svg'
+import apobankLogo from './assets/apobank.svg'
 import TransactionModal from './TransactionModal'
 
-const BANK_LOGOS = { n26: n26Logo, db: dbLogo }
+const BANK_LOGOS = { n26: n26Logo, db: dbLogo, apobank: apobankLogo }
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 

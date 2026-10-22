@@ -11,6 +11,7 @@
 
   --bank-n26:#5EB4A2;
   --bank-db: #495391;
+  --bank-apobank: #00427A;
 
   --text-primary:#000000;
   --text-secondary:#627B9D;
@@ -269,6 +270,10 @@
 
 .bank-db {
   background: var(--bank-db);
+}
+
+.bank-apobank {
+  background: var(--bank-apobank);
 }
 
 .card-bars {
